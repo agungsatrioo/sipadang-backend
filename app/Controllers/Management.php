@@ -42,28 +42,27 @@ class Management extends BaseController
         return $result;
     }
 
-    private function _merge() {
-        
+    private function _merge($array)
+    {
+        $data['username'] = session("username");
+        $data['logout_url'] = base_url("management/logout");
+        $data['sidebar_menu'] = $this->_createMenu();
+
+        return array_merge($data, $array);
     }
 
     public function index()
     {
         $data['title'] = "Management - Home";
-        $data['username'] = session('username');
-        $data['logout_url'] = base_url("management/logout");
-
-        $data['sidebar_menu'] = $this->_createMenu();
 
         $data['dashboard_page'] = view("management/dashboard/DashboardHomeView", $data);
 
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $data);
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
 
     public function list_sidang()
     {
         $data['title'] = "Management - Pendaftar Sidang";
-        $data['username'] = session('username');
-        $data['logout_url'] = base_url("management/logout");
 
         $request = $this->request;
 
@@ -75,66 +74,60 @@ class Management extends BaseController
             */
 
             $keyword = $request->getPost("mahasiswaKeyword");
+            $sidangType = $request->getPost("sidang");
+
             $mhsModel = new \App\Models\SidangModel($this->db);
 
-
+            switch($sidangType) {
+                case "proposal":
+                break;
+                case "kompre":
+                break;
+                case "munaqosah":
+                break;
+            }
         }
 
-        $data['sidebar_menu'] = $this->_createMenu();
         $data['dashboard_page'] = view("management/dashboard/DashboardPendaftarSidangView", $data);
 
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $data);
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
 
     public function penilaian_sidang()
     {
         $data['title'] = "Management - Penilaian Sidang";
-        $data['username'] = session('username');
-        $data['logout_url'] = base_url("management/logout");
-
-        $data['sidebar_menu'] = $this->_createMenu();
 
         $data['dashboard_page'] = view("management/dashboard/DashboardHomeView", $data);
 
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $data);
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
 
-    public function jadwal() {
+    public function jadwal()
+    {
         $data['title'] = "Management - Jadwal Sidang";
-        $data['username'] = session('username');
-        $data['logout_url'] = base_url("management/logout");
-
-        $data['sidebar_menu'] = $this->_createMenu();
 
         $data['dashboard_page'] = view("management/dashboard/DashboardHomeView", $data);
 
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $data);
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
 
     public function cetak()
     {
         $data['title'] = "Management - Cetak";
-        $data['username'] = session('username');
-        $data['logout_url'] = base_url("management/logout");
-
-        $data['sidebar_menu'] = $this->_createMenu();
 
         $data['dashboard_page'] = view("management/dashboard/DashboardCetakSKView", $data);
 
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $data);
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
 
     public function tambah_mhs()
     {
         $data['title'] = "Management - Tambah Mahasiswa";
-        $data['username'] = session('username');
-        $data['logout_url'] = base_url("management/logout");
 
         $authModel = new \App\Models\AuthModel($this->db);
         $sidangModel = new \App\Models\SidangModel($this->db);
 
         $request = $this->request;
-
 
         if (!empty($request->getPost('act'))) {
             $identity = $request->getPost("nim");
@@ -143,10 +136,8 @@ class Management extends BaseController
             $kelompok = $request->getPost("kelompok");
             $cekUser = $authModel->getUser($identity);
 
-            $bisaTambah = false;
-
             if (empty($cekUser)) {
-                //$result = $authModel->createUserMahasiswa($identity);
+                $result = $authModel->createUserMahasiswa($identity);
             }
 
             if (empty($penguji)) {
@@ -167,7 +158,11 @@ class Management extends BaseController
                             $sttsSidang = $sidangModel->addStatusSidang($statusUP, $kelompok);
                             $detailSidang =  $sidangModel->addDetailSidangProposal($statusUP, $judul);
 
-                            session()->setFlashdata("success", "Data peserta sidang berhasil dimasukkan.");
+                            if ($detailSidang) {
+                                session()->setFlashdata("success", "Data peserta sidang berhasil dimasukkan.");
+                            } else {
+                                session()->setFlashdata("error", "Data peserta sidang gagal dimasukkan.");
+                            }
                         } else {
                             session()->setFlashdata("error", "Ada salahsatu data penguji yang tidak ada.");
                         }
@@ -180,7 +175,11 @@ class Management extends BaseController
                             $sttsSidang = $sidangModel->addStatusSidang($statusUP, $kelompok);
                             $detailSidang =  $sidangModel->addDetailSidangKompre($statusUP);
 
-                            session()->setFlashdata("success", "Data peserta sidang berhasil dimasukkan.");
+                            if ($detailSidang) {
+                                session()->setFlashdata("success", "Data peserta sidang berhasil dimasukkan.");
+                            } else {
+                                session()->setFlashdata("error", "Data peserta sidang gagal dimasukkan.");
+                            }
                         } else {
                             session()->setFlashdata("error", "Ada salahsatu data penguji yang tidak ada.");
                         }
@@ -190,14 +189,18 @@ class Management extends BaseController
 
                         if (empty($judul)) {
                             session()->setFlashdata("error", "Tiap penguji/pembimbing harus satu orang yang berbeda.");
-                        } elseif(has_dupes($penguji) && has_dupes($pembimbing)) {
+                        } elseif (has_dupes($penguji) && has_dupes($pembimbing)) {
                             session()->setFlashdata("error", "Data penguji jangan duplikat.");
-                        }elseif (!empty($penguji[0]) && !empty($penguji[1]) && !empty($pembimbing[0])  && !empty($pembimbing[1])) {
+                        } elseif (!empty($penguji[0]) && !empty($penguji[1]) && !empty($pembimbing[0])  && !empty($pembimbing[1])) {
                             $statusUP = $sidangModel->addStatusMunaqosah($identity, $penguji, $pembimbing);
                             $sttsSidang = $sidangModel->addStatusSidang($statusUP, $kelompok);
                             $detailSidang =  $sidangModel->addDetailSidangMunaqosah($statusUP, $judul);
 
-                            session()->setFlashdata("success", "Data peserta sidang berhasil dimasukkan.");
+                            if ($detailSidang) {
+                                session()->setFlashdata("success", "Data peserta sidang berhasil dimasukkan.");
+                            } else {
+                                session()->setFlashdata("error", "Data peserta sidang gagal dimasukkan.");
+                            }
                         } else {
                             session()->setFlashdata("error", "Ada salahsatu data penguji yang tidak ada.");
                         }
@@ -205,9 +208,6 @@ class Management extends BaseController
                 }
             }
         }
-
-        $data['sidebar_menu'] = $this->_createMenu();
-
         $mhsModel = new \App\Models\MahasiswaModel($this->db);
         $dosenModel = new \App\Models\DosenModel($this->db);
 
@@ -219,7 +219,7 @@ class Management extends BaseController
 
         $data['dashboard_page'] = view("management/dashboard/DashboardTambahMhsView", $data);
 
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $data);
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
 
     public function cetak_print()
