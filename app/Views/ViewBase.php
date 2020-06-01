@@ -9,9 +9,9 @@
     <?= @$page ?>
     <?= @$js ?>
     <script>
-        $('select').chosen();
-
         $('.dataTable').DataTable();
+
+        $('select').chosen();
 
         $("#p01").hide();
         $("#p02").hide();

@@ -6,6 +6,20 @@
     </div>
 
     <div class="row">
+        <?php if (!empty($error)) { ?>
+            <div class="col-lg-12">
+                <div class="alert alert-danger">
+                    <?= $error ?>
+                </div>
+            </div>
+        <?php } ?>
+        <?php if (!empty($success)) { ?>
+            <div class="col-lg-12">
+                <div class="alert alert-success">
+                    <?= $success ?>
+                </div>
+            </div>
+        <?php } ?>
         <div class="col-lg-12">
             <div class="card mb-4">
                 <div class="card-header">
@@ -14,11 +28,6 @@
                 <div class="card-body">
                     <p>Cari mahasiswa sidang dengan mengetik nama mahasiswa yang bersangkutan pada form di bawah ini.</p>
                 </div>
-                <?php if (!empty($error)) { ?>
-                    <div class="alert alert-danger">
-                        <?= $error ?>
-                    </div>
-                <?php } ?>
                 <form action="<?= base_url("management/list_sidang") ?>" method="post">
                     <div class="row m-2">
                         <div class="col-lg-6">

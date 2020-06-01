@@ -730,13 +730,14 @@ class SidangModel extends Model
             ->insertBatch($fields);
     }
 
-    public function getTanggalSidang($tgl = "")
+    public function getTanggalSidang($tgl = "", $id = "")
     {
         $result = $this->db->table("t_jadwal_sidang")
             ->orderBy("tgl_jadwal_sidang", "asc");
 
-
         if (!empty($tgl)) $result = $result->where("tgl_jadwal_sidang", $tgl);
+
+        if (!empty($id)) $result = $result->where("id_jadwal_sidang", $id);
 
         $result = $result->get()->getResultObject();
 
@@ -750,9 +751,52 @@ class SidangModel extends Model
 
     public function addTanggalSidang($tgl)
     {
+        $tglSidang = $this->getTanggalSidang($tgl);
+
+        if(!empty($tglSidang)) return false;
+
         $fields = ["tgl_jadwal_sidang" => $tgl];
 
         return $this->db->table("t_jadwal_sidang")
             ->insert($fields);
+    }
+
+    public function editTanggalSidang($id, $tgl)
+    {
+        $tglSidang = $this->getTanggalSidang($tgl);
+
+        if(!empty($tglSidang)) return false;
+
+        $fields = ["tgl_jadwal_sidang" => $tgl];
+
+        return $this->db->table("t_jadwal_sidang")
+            ->where("id_jadwal_sidang", $id)
+            ->update($fields);
+    }
+
+    public function showJadwalSidang()
+    {
+        /*
+        select id_sidang, id_ruang, tgl_jadwal_sidang, nama_kelompok_sidang, nama_ruang
+        from t_sidang
+        join t_jadwal_sidang on t_sidang.id_jadwal_sidang = t_jadwal_sidang.id_jadwal_sidang
+        join t_kelompok_sidang on t_sidang.id_kelompok_sidang = t_kelompok_sidang.id_kelompok_sidang
+        join t_ruangan on t_sidang.id_ruangan = t_ruangan.id_ruang
+        order by id_sidang
+        */
+
+        $result = $this->db->table("t_sidang")
+            ->select("id_sidang, kode_ruang, tgl_jadwal_sidang, nama_kelompok_sidang, nama_ruang")
+            ->join("t_jadwal_sidang", "t_sidang.id_jadwal_sidang = t_jadwal_sidang.id_jadwal_sidang")
+            ->join("t_kelompok_sidang", "t_sidang.id_kelompok_sidang = t_kelompok_sidang.id_kelompok_sidang")
+            ->join("t_ruangan", "t_sidang.id_ruangan = t_ruangan.id_ruang")
+            ->orderBy("id_sidang")->get()->getResultObject();
+
+        if (!empty($result))
+            foreach ($result as $item) {
+                $item->tgl_sidang_fmtd = $this->tglIndonesia($item->tgl_jadwal_sidang, true);
+            }
+
+        return $result;
     }
 }

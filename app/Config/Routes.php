@@ -52,6 +52,8 @@ $routes->add('webauth/do_auth', 'WebAuth::do_auth');
 $routes->group('management', function($routes){
 	$routes->add('/', 'Management::index');
 	$routes->add('logout', 'Management::logout');
+	$routes->add('tanggal/(:num)/edit', 'Management::add_tanggal/$1/true');
+	$routes->add('add_tanggal', 'Management::add_tanggal');
 }); 
 
 

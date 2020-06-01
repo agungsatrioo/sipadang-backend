@@ -71,10 +71,6 @@ class Management extends BaseController
 
         if (!empty($request->getPost("mahasiswaKeyword"))) {
 
-            /*
-                TODO:
-                - Tampilkan informasi mahasiswa
-            */
             $viewDetails = "";
 
             $sidangModel = new \App\Models\SidangModel($this->db);
@@ -106,86 +102,10 @@ class Management extends BaseController
             } else {
                 session()->setFlashdata("error", "Data mahasiswa tidak ditemukan.");
             }
-        }
-
-        $data['result'] = view("management/dashboard/widget/MahasiswaDetailView.php", $data);
-        $data['error'] = session()->getFlashdata("error");
-        $data['dashboard_page'] = view("management/dashboard/DashboardPendaftarSidangView", $data);
-
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
-    }
-
-    public function tanggal()
-    {
-        $sidangModel = new \App\Models\SidangModel($this->db);
-
-        $data['title'] = "Management - Daftar Tanggal Sidang";
-
-        $data['tgl_list'] = $sidangModel->getTanggalSidang();
-
-        $data['dashboard_page'] = view("management/dashboard/DashboardTanggalListView", $data);
-
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
-    }
-
-    public function add_tanggal()
-    {
-        $sidangModel = new \App\Models\SidangModel($this->db);
-
-        $request = $this->request;
-
-        $data['title'] = "Management - Tambah Tanggal Sidang";
-
-        $data['tgl_list'] = $sidangModel->getTanggalSidang();
-        $data['min_date'] = strftime("%Y-%m-%d");
-
-        if(!empty($request->getPost("add"))) {
-            $tanggal = $request->getPost("tanggal");
-            $result = $sidangModel->addTanggalSidang($tanggal);
-
-            if($result) {
-                session()->setFlashdata("success", "Berhasil menambahkan tanggal.");
-            } else {
-                session()->setFlashdata("error", "Gagal menambahkan tanggal.");
-            }
-        }
-
-        $data['error'] = session()->getFlashdata("error");
-        $data['success'] = session()->getFlashdata("success");
-
-        $data['dashboard_page'] = view("management/dashboard/DashboardAddTanggalView", $data);
-
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
-    }
-
-    public function jadwal()
-    {
-        $data['title'] = "Management - Jadwal Sidang";
-
-        $data['dashboard_page'] = view("management/dashboard/DashboardJadwalListView.php", $data);
-
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
-    }
-
-    public function cetak()
-    {
-        $data['title'] = "Management - Cetak";
-
-        $data['dashboard_page'] = view("management/dashboard/DashboardCetakSKView", $data);
-
-        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
-    }
-
-    public function tambah_mhs()
-    {
-        $data['title'] = "Management - Tambah Mahasiswa";
-
-        $authModel = new \App\Models\AuthModel($this->db);
-        $sidangModel = new \App\Models\SidangModel($this->db);
-
-        $request = $this->request;
-
-        if (!empty($request->getPost('act'))) {
+        }elseif (!empty($request->getPost('act'))) {
+            $authModel = new \App\Models\AuthModel($this->db);
+            $sidangModel = new \App\Models\SidangModel($this->db);
+            
             $identity = $request->getPost("nim");
             $penguji = $request->getPost("penguji");
             $pembimbing = $request->getPost("pembimbing");
@@ -264,6 +184,126 @@ class Management extends BaseController
                 }
             }
         }
+
+        $data['result'] = view("management/dashboard/widget/MahasiswaDetailView.php", $data);
+        $data['error'] = session()->getFlashdata("error");
+        $data['dashboard_page'] = view("management/dashboard/DashboardPendaftarSidangView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function tanggal()
+    {
+        $sidangModel = new \App\Models\SidangModel($this->db);
+
+        $request = $this->request;
+
+        $data['title'] = "Management - Daftar Tanggal Sidang";
+
+        if (!empty($request->getPost("add"))) {
+            $tanggal = $request->getPost("tanggal");
+            $edit_id = $request->getPost("id_tanggal");
+
+            if (empty($edit_id)) {
+                $result = $sidangModel->addTanggalSidang($tanggal);
+
+                if ($result) {
+                    session()->setFlashdata("success", "Berhasil menambahkan tanggal.");
+                } else {
+                    session()->setFlashdata("error", "Gagal menambahkan tanggal.");
+                }
+            } else {
+                $result = $sidangModel->editTanggalSidang($edit_id, $tanggal);
+
+                if ($result) {
+                    session()->setFlashdata("success", "Berhasil mengedit tanggal.");
+                } else {
+                    session()->setFlashdata("error", "Gagal mengedit tanggal.");
+                }
+            }
+        }
+
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
+
+        $data['tgl_list'] = $sidangModel->getTanggalSidang();
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardTanggalListView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function add_tanggal($id = "", $edit = false)
+    {
+        $sidangModel = new \App\Models\SidangModel($this->db);
+
+        if ($edit) {
+            $data['header'] = "Edit Tanggal";
+            $data['title'] = "Management - Edit Tanggal Sidang";
+        } else {
+            $data['title'] = "Management - Tambah Tanggal Sidang";
+            $data['header'] = "Tambah Tanggal";
+        }
+
+        $data['action_url'] = base_url("management/tanggal");
+
+        if (!empty($id)) {
+            $tglList = $sidangModel->getTanggalSidang("", "$id");
+
+            $data['tglSidang'] = $tglList[0]->tgl_jadwal_sidang;
+            $data['id_tanggal'] = "<input type='hidden' name='id_tanggal' value='$id'>";
+        }
+
+        $data['min_date'] = strftime("%Y-%m-%d");
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardAddTanggalView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function jadwal()
+    {
+        $sidangModel = new \App\Models\SidangModel($this->db);
+
+        $data['title'] = "Management - Jadwal Sidang";
+
+        $data['list_jadwal'] = $sidangModel->showJadwalSidang();
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardJadwalListView.php", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function add_jadwal()
+    {
+        $sidangModel = new \App\Models\SidangModel($this->db);
+
+        $data['title'] = "Management - Tambah Jadwal Sidang";
+
+        $data['list_jadwal'] = $sidangModel->showJadwalSidang();
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardJadwalListView.php", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function cetak()
+    {
+        $data['title'] = "Management - Cetak";
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardCetakSKView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function tambah_mhs()
+    {
+        $data['title'] = "Management - Tambah Mahasiswa";
+
+        $authModel = new \App\Models\AuthModel($this->db);
+        $sidangModel = new \App\Models\SidangModel($this->db);
+
+
         $mhsModel = new \App\Models\MahasiswaModel($this->db);
         $dosenModel = new \App\Models\DosenModel($this->db);
 

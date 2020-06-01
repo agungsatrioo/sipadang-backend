@@ -16,7 +16,7 @@
         </div>
     <?php } ?>
 
-    <form action="<?= base_url("management/tambah_mhs") ?>" method="post">
+    <form action="<?= base_url("management/list_sidang") ?>" method="post">
         <div class="form-group row">
             <label class="col-sm-2 col-form-label">NIM</label>
             <div class="col-sm-10">
