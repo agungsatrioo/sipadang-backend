@@ -112,35 +112,7 @@ class Inputapi extends ResourceController
 		$nim = $data->getGet('mahasiswa');
 		$id_dosen = $data->getGet('dosen');
 
-		$query = $sidangModel->getUP($id_dosen, $nim);
-
-		foreach ($query as $key => $item) {
-			$ada_nilai = true;
-
-			if (isset($nim)) {
-				$penguji        = $sidangModel->getStatusDosenDiSidang($item->nim, "Penguji Sidang Proposal %");
-				$item->penguji  = $penguji;
-
-				foreach ($item->penguji as $k1 => $v1) {
-					if (!is_numeric($v1->nilai)) {
-						$item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
-						$ada_nilai   = false;
-						break;
-					}
-				}
-
-				if ($ada_nilai) {
-					$nilai = (.5 * $item->penguji[0]->nilai) + (.5 * $item->penguji[1]->nilai);
-					$item->nilai = ["nilai" => floor($nilai), "mutu" => $sidangModel->_mutu($nilai), "color" => $sidangModel->warna($nilai)];
-				}
-
-				break;
-			} else {
-				$item->nilai = $sidangModel->cekNilai($item->id_status)[0];
-			}
-		}
-
-		return $this->respond(isset($nim) ? $query[0] : $query, 200);
+		return $this->respond($sidangModel->getUP($id_dosen, $nim), 200);
 	}
 
 	public function munaqosah()
@@ -154,40 +126,7 @@ class Inputapi extends ResourceController
 		$nim = $data->getGet('mahasiswa');
 		$id_dosen = $data->getGet('dosen');
 
-		$query = $sidangModel->getMunaqosah($id_dosen, $nim);
-
-		foreach ($query as $key => $item) {
-			$ada_nilai = true;
-
-			if (isset($nim)) {
-				$penguji        = $sidangModel->getStatusDosenDiSidang($item->nim, "Penguji Sidang Munaqosah %");
-				$pembimbing        = $sidangModel->getStatusDosenDiSidang($item->nim, "Pembimbing Munaqosah %");
-				$dosenku        = $sidangModel->getStatusDosenDiSidang($item->nim, "Munaqosah %");
-
-				$item->penguji  = $penguji;
-				$item->pembimbing  = $pembimbing;
-
-				foreach ($dosenku as $k1 => $v1) {
-					if (!is_numeric($v1->nilai)) {
-						$item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
-						$ada_nilai   = false;
-						break;
-					}
-				}
-
-				if ($ada_nilai) {
-					$nilai = (.3 * $item->penguji[0]->nilai) + (.3 * $item->penguji[1]->nilai) +  (.2 * $item->pembimbing[0]->nilai) + (.2 * $item->pembimbing[1]->nilai);
-
-					$item->nilai = ["nilai" => floor($nilai), "mutu" => $sidangModel->_mutu($nilai), "color" => $sidangModel->warna($nilai)];
-				}
-
-				break;
-			} else {
-				$item->nilai = $sidangModel->cekNilai($item->id_status)[0];
-			}
-		}
-
-		return $this->respond(isset($nim) ? $query[0] : $query, 200);
+		return $this->respond($sidangModel->getMunaqosah($id_dosen, $nim), 200);
 	}
 
 	public function kompre()
@@ -201,40 +140,7 @@ class Inputapi extends ResourceController
 		$nim = $data->getGet('mahasiswa');
 		$id_dosen = $data->getGet('dosen');
 
-		$presentase_kompre = .333333333; //must be precise!
-
-		$query = $sidangModel->getKompre($id_dosen, $nim);
-
-		foreach ($query as $key => $item) {
-			$ada_nilai = true;
-
-			if (isset($nim)) {
-				$penguji        = $sidangModel->getStatusDosenDiSidang($item->nim, "Penguji Sidang Komprehensif %");
-				$item->penguji  = $penguji;
-
-				foreach ($item->penguji as $k1 => $v1) {
-					if (!is_numeric($v1->nilai)) {
-						$item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
-						$ada_nilai   = false;
-						break;
-					}
-				}
-
-				if ($ada_nilai) {
-					$nilai = ($presentase_kompre * $item->penguji[0]->nilai) + ($presentase_kompre * $item->penguji[1]->nilai) + ($presentase_kompre * $item->penguji[2]->nilai);
-
-					if ($nilai > 100) $nilai = 100;
-
-					$item->nilai = ["nilai" => floor($nilai), "mutu" => $sidangModel->_mutu($nilai), "color" => $sidangModel->warna($nilai)];
-				}
-
-				break;
-			} else {
-				$item->nilai = $sidangModel->cekNilai($item->id_status)[0];
-			}
-		}
-
-		return $this->respond(isset($nim) ? $query[0] : $query, 200);
+		return $this->respond($sidangModel->getKompre($id_dosen, $nim), 200);
 	}
 
 	public function cek_nilai()

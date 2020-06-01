@@ -37,7 +37,7 @@ class MahasiswaModel extends Model
 			->join("t_jurusan", "t_jurusan.kode_jur = mhs.kode_jurusan")
 			->where("nim", $keyword)
 			->orLike("nama_mhs", $keyword)
-			->get();
+			->get()->getResultObject();
 	}
 
 	public function populateMhs($wildCard) {

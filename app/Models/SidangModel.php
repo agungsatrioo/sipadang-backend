@@ -78,26 +78,121 @@ class SidangModel extends Model
 
         $hariString = "";
 
-        if($withHari) {
+        if ($withHari) {
             $hariString = $hari[$hariNumber] . ",";
         }
 
-        return "$hariString $tglNumber {$bulan[((int) $bulanNumber)-1]} $thnNumber";
+        return "$hariString $tglNumber {$bulan[((int)$bulanNumber) - 1]} $thnNumber";
     }
 
     public function getUP($id_dosen, $nim, $date = "")
     {
-        return $this->getSidangDetails("proposal", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_proposal", "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
+        
+        $result = $this->getSidangDetails("proposal", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_proposal", "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
+
+        foreach ($result as $key => $item) {
+            $ada_nilai = true;
+
+            if (!empty($nim)) {
+                $penguji        = $this->getStatusDosenDiSidang($item->nim, "Penguji Sidang Proposal %");
+                $item->penguji  = $penguji;
+
+                foreach ($item->penguji as $k1 => $v1) {
+                    if (!is_numeric($v1->nilai)) {
+                        $item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
+                        $ada_nilai   = false;
+                        break;
+                    }
+                }
+
+                if ($ada_nilai) {
+                    $nilai = (.5 * $item->penguji[0]->nilai) + (.5 * $item->penguji[1]->nilai);
+                    $item->nilai = ["nilai" => floor($nilai), "mutu" => $this->_mutu($nilai), "color" => $this->warna($nilai)];
+                }
+
+                break;
+            } else {
+                $item->nilai = $this->cekNilai($item->id_status)[0];
+            }
+        }
+
+        return !empty($nim) ? $result[0] : $result;
     }
 
     public function getMunaqosah($id_dosen, $nim,  $date = "")
     {
-        return $this->getSidangDetails("munaqosah", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_munaqosah", "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
+        $query = $this->getSidangDetails("munaqosah", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_munaqosah", "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
+
+		foreach ($query as $key => $item) {
+			$ada_nilai = true;
+
+			if (!empty($nim)) {
+				$penguji        = $this->getStatusDosenDiSidang($item->nim, "Penguji Sidang Munaqosah %");
+				$pembimbing        = $this->getStatusDosenDiSidang($item->nim, "Pembimbing Munaqosah %");
+				$dosenku        = $this->getStatusDosenDiSidang($item->nim, "Munaqosah %");
+
+				$item->penguji  = $penguji;
+				$item->pembimbing  = $pembimbing;
+
+				foreach ($dosenku as $k1 => $v1) {
+					if (!is_numeric($v1->nilai)) {
+						$item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
+						$ada_nilai   = false;
+						break;
+					}
+				}
+
+				if ($ada_nilai) {
+					$nilai = (.3 * $item->penguji[0]->nilai) + (.3 * $item->penguji[1]->nilai) +  (.2 * $item->pembimbing[0]->nilai) + (.2 * $item->pembimbing[1]->nilai);
+
+					$item->nilai = ["nilai" => floor($nilai), "mutu" => $this->_mutu($nilai), "color" => $this->warna($nilai)];
+				}
+
+				break;
+			} else {
+				$item->nilai = $this->cekNilai($item->id_status)[0];
+			}
+		}
+
+        return !empty($nim) ? $query[0] : $query;
     }
 
     public function getKompre($id_dosen, $nim,  $date = "")
     {
-        return $this->getSidangDetails("munaqosah", ["s_sidang.id_status", "mhs.nim", "nama_mhs",  "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
+        $query = $this->getSidangDetails("kompre", ["s_sidang.id_status", "mhs.nim", "nama_mhs",  "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
+
+        $presentase_kompre = .333333333; //must be precise!
+
+		foreach ($query as $key => $item) {
+			$ada_nilai = true;
+
+			if (!empty($nim)) {
+				$penguji        = $this->getStatusDosenDiSidang($item->nim, "Penguji Sidang Komprehensif %");
+				$item->penguji  = $penguji;
+
+				foreach ($item->penguji as $k1 => $v1) {
+					if (!is_numeric($v1->nilai)) {
+						$item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
+						$ada_nilai   = false;
+						break;
+					}
+				}
+
+				if ($ada_nilai) {
+					$nilai = ($presentase_kompre * $item->penguji[0]->nilai) + ($presentase_kompre * $item->penguji[1]->nilai) + ($presentase_kompre * $item->penguji[2]->nilai);
+
+					if ($nilai > 100) $nilai = 100;
+
+					$item->nilai = ["nilai" => floor($nilai), "mutu" => $this->_mutu($nilai), "color" => $this->warna($nilai)];
+				}
+
+				break;
+			} else {
+				$item->nilai = $this->cekNilai($item->id_status)[0];
+			}
+		}
+
+        return !empty($nim) ? $query[0] : $query;
     }
 
     private function getSidangDetails($table, $fields, $id_dosen, $nim, $date = "")
@@ -106,9 +201,9 @@ class SidangModel extends Model
 
         if (!empty($date)) {
             $conditions = ["tgl_jadwal_sidang" => $date];
-        } elseif (isset($id_dosen)) {
+        } elseif (!empty($id_dosen)) {
             $conditions = ["dsn.id_dosen" => $id_dosen];
-        } elseif (isset($nim)) {
+        } elseif (!empty($nim)) {
             $conditions = ["mhs.nim" => $nim];
         }
 
@@ -131,9 +226,9 @@ class SidangModel extends Model
             ->get()->getResultObject();
 
         foreach ($query as $it) {
-            if (isset($id_dosen)) {
+            if (!empty($id_dosen)) {
                 $it->keterangan_sidang = $it->nilai != null ?  "Sidang sudah dinilai" : "Belum sidang";
-            } elseif (isset($nim)) {
+            } elseif (!empty($nim)) {
                 unset($it->id_status);
             }
 
@@ -488,10 +583,10 @@ class SidangModel extends Model
     public function addStatusUP($nim, $penguji)
     {
         $fields = [];
-        $pengujiID = [6,7];
+        $pengujiID = [6, 7];
         $insertID = [];
 
-        foreach ($penguji as $id=>$eachPenguji) {
+        foreach ($penguji as $id => $eachPenguji) {
             $fields[] = [
                 "id_jenis_status" => $pengujiID[$id],
                 "nim"             => $nim,
@@ -500,9 +595,9 @@ class SidangModel extends Model
         }
 
 
-        foreach($fields as $key=>$value) {
+        foreach ($fields as $key => $value) {
             $query = $this->db->table('t_status')
-            ->insert($value);
+                ->insert($value);
 
             $insertID[] = $this->db->insertID();
         }
@@ -513,10 +608,10 @@ class SidangModel extends Model
     public function addStatusKompre($nim, $penguji)
     {
         $fields = [];
-        $pengujiID = [8,9,10];
+        $pengujiID = [8, 9, 10];
         $insertID = [];
 
-        foreach ($penguji as $id=>$eachPenguji) {
+        foreach ($penguji as $id => $eachPenguji) {
             $fields[] = [
                 "id_jenis_status" => $pengujiID[$id],
                 "nim"             => $nim,
@@ -525,9 +620,9 @@ class SidangModel extends Model
         }
 
 
-        foreach($fields as $key=>$value) {
+        foreach ($fields as $key => $value) {
             $query = $this->db->table('t_status')
-            ->insert($value);
+                ->insert($value);
 
             $insertID[] = $this->db->insertID();
         }
@@ -538,11 +633,11 @@ class SidangModel extends Model
     public function addStatusMunaqosah($nim, $penguji, $pembimbing)
     {
         $fields = [];
-        $pengujiID = [3,4,];
-        $pembimbingID = [11,12];
+        $pengujiID = [3, 4,];
+        $pembimbingID = [11, 12];
         $insertID = [];
 
-        foreach ($penguji as $id=>$eachPenguji) {
+        foreach ($penguji as $id => $eachPenguji) {
             $fields[] = [
                 "id_jenis_status" => $pengujiID[$id],
                 "nim"             => $nim,
@@ -550,7 +645,7 @@ class SidangModel extends Model
             ];
         }
 
-        foreach ($pembimbing as $id=>$eachPembimbing) {
+        foreach ($pembimbing as $id => $eachPembimbing) {
             $fields[] = [
                 "id_jenis_status" => $pembimbingID[$id],
                 "nim"             => $nim,
@@ -559,30 +654,31 @@ class SidangModel extends Model
         }
 
 
-        foreach($fields as $key=>$value) {
+        foreach ($fields as $key => $value) {
             $query = $this->db->table('t_status')
-            ->insert($value);
+                ->insert($value);
 
             $insertID[] = $this->db->insertID();
-        } 
+        }
 
         return $insertID;
     }
 
-    public function addStatusSidang($id_status, $id_sidang) {
+    public function addStatusSidang($id_status, $id_sidang)
+    {
         $fields = [];
         $insertID = [];
 
-        foreach($id_status as $eachIDStatus) {
+        foreach ($id_status as $eachIDStatus) {
             $fields[] = [
                 "id_status" => $eachIDStatus,
                 "id_sidang" => $id_sidang
             ];
         }
 
-        foreach($fields as $key=>$value) {
+        foreach ($fields as $key => $value) {
             $query = $this->db->table('t_status_sidang')
-            ->insert($value);
+                ->insert($value);
 
             $insertID[] = $this->db->insertID();
         }
@@ -590,10 +686,11 @@ class SidangModel extends Model
         return $insertID;
     }
 
-    public function addDetailSidangProposal($id_status_sidang, $judul) {
+    public function addDetailSidangProposal($id_status_sidang, $judul)
+    {
         $fields = [];
 
-        foreach($id_status_sidang as $eachIDStatus) {
+        foreach ($id_status_sidang as $eachIDStatus) {
             $fields[] = [
                 "id_status_sidang" => $eachIDStatus,
                 "judul_proposal" => $judul
@@ -601,26 +698,28 @@ class SidangModel extends Model
         }
 
         return $this->db->table("t_u_proposal")
-        ->insertBatch($fields);
+            ->insertBatch($fields);
     }
 
-    public function addDetailSidangKompre($id_status_sidang) {
+    public function addDetailSidangKompre($id_status_sidang)
+    {
         $fields = [];
 
-        foreach($id_status_sidang as $eachIDStatus) {
+        foreach ($id_status_sidang as $eachIDStatus) {
             $fields[] = [
                 "id_status_sidang" => $eachIDStatus,
             ];
         }
 
         return $this->db->table("t_u_kompre")
-        ->insertBatch($fields);
+            ->insertBatch($fields);
     }
 
-    public function addDetailSidangMunaqosah($id_status_sidang, $judul) {
+    public function addDetailSidangMunaqosah($id_status_sidang, $judul)
+    {
         $fields = [];
 
-        foreach($id_status_sidang as $eachIDStatus) {
+        foreach ($id_status_sidang as $eachIDStatus) {
             $fields[] = [
                 "id_status_sidang" => $eachIDStatus,
                 "judul_munaqosah" => $judul
@@ -628,6 +727,6 @@ class SidangModel extends Model
         }
 
         return $this->db->table("t_u_munaqosah")
-        ->insertBatch($fields);
+            ->insertBatch($fields);
     }
 }

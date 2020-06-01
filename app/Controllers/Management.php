@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use Exception;
+
 class Management extends BaseController
 {
 
@@ -72,22 +74,41 @@ class Management extends BaseController
                 TODO:
                 - Tampilkan informasi mahasiswa
             */
+            $viewDetails = "";
+
+            $sidangModel = new \App\Models\SidangModel($this->db);
+            $mhsModel = new \App\Models\MahasiswaModel($this->db);
 
             $keyword = $request->getPost("mahasiswaKeyword");
             $sidangType = $request->getPost("sidang");
 
-            $mhsModel = new \App\Models\SidangModel($this->db);
+            $listMhs = $mhsModel->findMahasiswaByKeyword($keyword);
 
-            switch($sidangType) {
-                case "proposal":
-                break;
-                case "kompre":
-                break;
-                case "munaqosah":
-                break;
+            if (!empty($listMhs)) {
+                switch ($sidangType) {
+                    case "proposal":
+                        $detailUP = [];
+                        try {
+                            foreach ($listMhs as $eachMhs) {
+                                $detailUP[] = $sidangModel->getUP("", $eachMhs->nim);
+                            }
+                            $data['detailUP'] = $detailUP;
+                        } catch (Exception $e) {
+                            session()->setFlashdata("error", "Data sidang tidak ditemukan.");
+                        }
+                        break;
+                    case "kompre":
+                        break;
+                    case "munaqosah":
+                        break;
+                }
+            } else {
+                session()->setFlashdata("error", "Data mahasiswa tidak ditemukan.");
             }
         }
 
+        $data['result'] = view("management/dashboard/widget/MahasiswaDetailView.php", $data);
+        $data['error'] = session()->getFlashdata("error");
         $data['dashboard_page'] = view("management/dashboard/DashboardPendaftarSidangView", $data);
 
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
@@ -137,7 +158,7 @@ class Management extends BaseController
             $cekUser = $authModel->getUser($identity);
 
             if (empty($cekUser)) {
-                $result = $authModel->createUserMahasiswa($identity);
+                //$result = $authModel->createUserMahasiswa($identity);
             }
 
             if (empty($penguji)) {
