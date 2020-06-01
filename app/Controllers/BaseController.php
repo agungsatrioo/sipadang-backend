@@ -62,6 +62,7 @@ class BaseController extends Controller
 			"public/media/vendor/fontawesome-free/css/all.min.css",
 			"public/media/sbadmin2/css/sb-admin-2.min.css",
 			"public/media/jquery_chosen/chosen.min.css",
+			"public/media/vendor/datatables/dataTables.bootstrap4.min.css",
 			"public/media/custom.css"
 		];
 
@@ -71,7 +72,9 @@ class BaseController extends Controller
 			"public/media/vendor/jquery-easing/jquery.easing.min.js",
 			"public/media/jquery_chosen/chosen.jquery.min.js",
 			"public/media/sbadmin2/js/sb-admin-2.min.js",
-			"public/media/vendor/chart.js/Chart.min.js"
+			"public/media/vendor/chart.js/Chart.min.js",
+			"public/media/vendor/datatables/jquery.dataTables.min.js",
+			"public/media/vendor/datatables/dataTables.bootstrap4.min.js",
 		];
 
 		foreach ($css as $cssItem) {

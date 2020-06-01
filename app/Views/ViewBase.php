@@ -11,6 +11,8 @@
     <script>
         $('select').chosen();
 
+        $('.dataTable').DataTable();
+
         $("#p01").hide();
         $("#p02").hide();
         $("#p03").hide();

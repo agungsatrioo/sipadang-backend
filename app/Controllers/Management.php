@@ -17,6 +17,7 @@ class Management extends BaseController
             ["type" => "header", "Akademik"],
             ["type" => "item", "Pendaftar Sidang", base_url("management/list_sidang"), "fa-table"],
             ["type" => "item", "Jadwal Sidang", base_url("management/jadwal"), "fa-clock"],
+            ["type" => "item", "Tanggal Sidang", base_url("management/tanggal"), "fa-clock"],
             ["type" => "hr"],
             ["type" => "header", "Cetak"],
             ["type" => "item", "Cetak Rekapitulasi", base_url("management/cetak"), "fa-print"],
@@ -114,11 +115,45 @@ class Management extends BaseController
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
 
-    public function penilaian_sidang()
+    public function tanggal()
     {
-        $data['title'] = "Management - Penilaian Sidang";
+        $sidangModel = new \App\Models\SidangModel($this->db);
 
-        $data['dashboard_page'] = view("management/dashboard/DashboardHomeView", $data);
+        $data['title'] = "Management - Daftar Tanggal Sidang";
+
+        $data['tgl_list'] = $sidangModel->getTanggalSidang();
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardTanggalListView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function add_tanggal()
+    {
+        $sidangModel = new \App\Models\SidangModel($this->db);
+
+        $request = $this->request;
+
+        $data['title'] = "Management - Tambah Tanggal Sidang";
+
+        $data['tgl_list'] = $sidangModel->getTanggalSidang();
+        $data['min_date'] = strftime("%Y-%m-%d");
+
+        if(!empty($request->getPost("add"))) {
+            $tanggal = $request->getPost("tanggal");
+            $result = $sidangModel->addTanggalSidang($tanggal);
+
+            if($result) {
+                session()->setFlashdata("success", "Berhasil menambahkan tanggal.");
+            } else {
+                session()->setFlashdata("error", "Gagal menambahkan tanggal.");
+            }
+        }
+
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardAddTanggalView", $data);
 
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
@@ -127,7 +162,7 @@ class Management extends BaseController
     {
         $data['title'] = "Management - Jadwal Sidang";
 
-        $data['dashboard_page'] = view("management/dashboard/DashboardHomeView", $data);
+        $data['dashboard_page'] = view("management/dashboard/DashboardJadwalListView.php", $data);
 
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }

@@ -87,7 +87,7 @@ class SidangModel extends Model
 
     public function getUP($id_dosen, $nim, $date = "")
     {
-        
+
         $result = $this->getSidangDetails("proposal", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_proposal", "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
 
         foreach ($result as $key => $item) {
@@ -123,36 +123,36 @@ class SidangModel extends Model
     {
         $query = $this->getSidangDetails("munaqosah", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_munaqosah", "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
 
-		foreach ($query as $key => $item) {
-			$ada_nilai = true;
+        foreach ($query as $key => $item) {
+            $ada_nilai = true;
 
-			if (!empty($nim)) {
-				$penguji        = $this->getStatusDosenDiSidang($item->nim, "Penguji Sidang Munaqosah %");
-				$pembimbing        = $this->getStatusDosenDiSidang($item->nim, "Pembimbing Munaqosah %");
-				$dosenku        = $this->getStatusDosenDiSidang($item->nim, "Munaqosah %");
+            if (!empty($nim)) {
+                $penguji        = $this->getStatusDosenDiSidang($item->nim, "Penguji Sidang Munaqosah %");
+                $pembimbing        = $this->getStatusDosenDiSidang($item->nim, "Pembimbing Munaqosah %");
+                $dosenku        = $this->getStatusDosenDiSidang($item->nim, "Munaqosah %");
 
-				$item->penguji  = $penguji;
-				$item->pembimbing  = $pembimbing;
+                $item->penguji  = $penguji;
+                $item->pembimbing  = $pembimbing;
 
-				foreach ($dosenku as $k1 => $v1) {
-					if (!is_numeric($v1->nilai)) {
-						$item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
-						$ada_nilai   = false;
-						break;
-					}
-				}
+                foreach ($dosenku as $k1 => $v1) {
+                    if (!is_numeric($v1->nilai)) {
+                        $item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
+                        $ada_nilai   = false;
+                        break;
+                    }
+                }
 
-				if ($ada_nilai) {
-					$nilai = (.3 * $item->penguji[0]->nilai) + (.3 * $item->penguji[1]->nilai) +  (.2 * $item->pembimbing[0]->nilai) + (.2 * $item->pembimbing[1]->nilai);
+                if ($ada_nilai) {
+                    $nilai = (.3 * $item->penguji[0]->nilai) + (.3 * $item->penguji[1]->nilai) +  (.2 * $item->pembimbing[0]->nilai) + (.2 * $item->pembimbing[1]->nilai);
 
-					$item->nilai = ["nilai" => floor($nilai), "mutu" => $this->_mutu($nilai), "color" => $this->warna($nilai)];
-				}
+                    $item->nilai = ["nilai" => floor($nilai), "mutu" => $this->_mutu($nilai), "color" => $this->warna($nilai)];
+                }
 
-				break;
-			} else {
-				$item->nilai = $this->cekNilai($item->id_status)[0];
-			}
-		}
+                break;
+            } else {
+                $item->nilai = $this->cekNilai($item->id_status)[0];
+            }
+        }
 
         return !empty($nim) ? $query[0] : $query;
     }
@@ -163,34 +163,34 @@ class SidangModel extends Model
 
         $presentase_kompre = .333333333; //must be precise!
 
-		foreach ($query as $key => $item) {
-			$ada_nilai = true;
+        foreach ($query as $key => $item) {
+            $ada_nilai = true;
 
-			if (!empty($nim)) {
-				$penguji        = $this->getStatusDosenDiSidang($item->nim, "Penguji Sidang Komprehensif %");
-				$item->penguji  = $penguji;
+            if (!empty($nim)) {
+                $penguji        = $this->getStatusDosenDiSidang($item->nim, "Penguji Sidang Komprehensif %");
+                $item->penguji  = $penguji;
 
-				foreach ($item->penguji as $k1 => $v1) {
-					if (!is_numeric($v1->nilai)) {
-						$item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
-						$ada_nilai   = false;
-						break;
-					}
-				}
+                foreach ($item->penguji as $k1 => $v1) {
+                    if (!is_numeric($v1->nilai)) {
+                        $item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
+                        $ada_nilai   = false;
+                        break;
+                    }
+                }
 
-				if ($ada_nilai) {
-					$nilai = ($presentase_kompre * $item->penguji[0]->nilai) + ($presentase_kompre * $item->penguji[1]->nilai) + ($presentase_kompre * $item->penguji[2]->nilai);
+                if ($ada_nilai) {
+                    $nilai = ($presentase_kompre * $item->penguji[0]->nilai) + ($presentase_kompre * $item->penguji[1]->nilai) + ($presentase_kompre * $item->penguji[2]->nilai);
 
-					if ($nilai > 100) $nilai = 100;
+                    if ($nilai > 100) $nilai = 100;
 
-					$item->nilai = ["nilai" => floor($nilai), "mutu" => $this->_mutu($nilai), "color" => $this->warna($nilai)];
-				}
+                    $item->nilai = ["nilai" => floor($nilai), "mutu" => $this->_mutu($nilai), "color" => $this->warna($nilai)];
+                }
 
-				break;
-			} else {
-				$item->nilai = $this->cekNilai($item->id_status)[0];
-			}
-		}
+                break;
+            } else {
+                $item->nilai = $this->cekNilai($item->id_status)[0];
+            }
+        }
 
         return !empty($nim) ? $query[0] : $query;
     }
@@ -728,5 +728,31 @@ class SidangModel extends Model
 
         return $this->db->table("t_u_munaqosah")
             ->insertBatch($fields);
+    }
+
+    public function getTanggalSidang($tgl = "")
+    {
+        $result = $this->db->table("t_jadwal_sidang")
+            ->orderBy("tgl_jadwal_sidang", "asc");
+
+
+        if (!empty($tgl)) $result = $result->where("tgl_jadwal_sidang", $tgl);
+
+        $result = $result->get()->getResultObject();
+
+        if (!empty($result))
+            foreach ($result as $item) {
+                $item->tgl_sidang = $this->tglIndonesia($item->tgl_jadwal_sidang, true);
+            }
+
+        return $result;
+    }
+
+    public function addTanggalSidang($tgl)
+    {
+        $fields = ["tgl_jadwal_sidang" => $tgl];
+
+        return $this->db->table("t_jadwal_sidang")
+            ->insert($fields);
     }
 }
