@@ -18,6 +18,7 @@ class Management extends BaseController
             ["type" => "item", "Pendaftar Sidang", base_url("management/list_sidang"), "fa-table"],
             ["type" => "item", "Jadwal Sidang", base_url("management/jadwal"), "fa-clock"],
             ["type" => "item", "Tanggal Sidang", base_url("management/tanggal"), "fa-clock"],
+            ["type" => "item", "Ruangan Sidang", base_url("management/ruangan"), "fa-door"],
             ["type" => "hr"],
             ["type" => "header", "Cetak"],
             ["type" => "item", "Cetak Rekapitulasi", base_url("management/cetak"), "fa-print"],
@@ -233,11 +234,11 @@ class Management extends BaseController
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
 
-    public function add_tanggal($id = "", $edit = false)
+    public function tanggal_form($id = "")
     {
         $sidangModel = new \App\Models\SidangModel($this->db);
 
-        if ($edit) {
+        if (!empty($id)) {
             $data['header'] = "Edit Tanggal";
             $data['title'] = "Management - Edit Tanggal Sidang";
         } else {
@@ -274,15 +275,68 @@ class Management extends BaseController
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
 
-    public function add_jadwal()
+    public function jadwal_form($id = "")
     {
         $sidangModel = new \App\Models\SidangModel($this->db);
 
         $data['title'] = "Management - Tambah Jadwal Sidang";
+        $data['header'] = 'Tambah Jadwal';
 
-        $data['list_jadwal'] = $sidangModel->showJadwalSidang();
+        $data['listKelompok'] = "";
 
-        $data['dashboard_page'] = view("management/dashboard/DashboardJadwalListView.php", $data);
+        $data['dashboard_page'] = view("management/dashboard/DashboardJadwalFormView.php", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function ruangan()
+    {
+        $sidangModel = new \App\Models\SidangModel($this->db);
+
+        $request = $this->request;
+
+        $data['title'] = "Management - Daftar Ruangan Sidang";
+
+        if (!empty($request->getPost("add"))) {
+            $tanggal = $request->getPost("tanggal");
+            $edit_id = $request->getPost("id_tanggal");
+
+            if (empty($edit_id)) {
+                $result = $sidangModel->addTanggalSidang($tanggal);
+
+                if ($result) {
+                    session()->setFlashdata("success", "Berhasil menambahkan ruangan.");
+                } else {
+                    session()->setFlashdata("error", "Gagal menambahkan ruangan.");
+                }
+            } else {
+                $result = $sidangModel->editTanggalSidang($edit_id, $tanggal);
+
+                if ($result) {
+                    session()->setFlashdata("success", "Berhasil mengedit ruangan.");
+                } else {
+                    session()->setFlashdata("error", "Gagal mengedit ruangan.");
+                }
+            }
+        }
+
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
+
+        $data['ruang_list'] = $sidangModel->showRuanganSidang();
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardRuanganListView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function ruangan_form($id = "") {
+        $sidangModel = new \App\Models\SidangModel($this->db);
+
+        $data['title'] = "Management - Tambah Ruangan Sidang";
+        $data['header'] = 'Tambah Ruangan';
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardRuanganFormView.php", $data);
 
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }

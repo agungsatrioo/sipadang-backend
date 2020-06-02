@@ -52,8 +52,28 @@ $routes->add('webauth/do_auth', 'WebAuth::do_auth');
 $routes->group('management', function($routes){
 	$routes->add('/', 'Management::index');
 	$routes->add('logout', 'Management::logout');
-	$routes->add('tanggal/(:num)/edit', 'Management::add_tanggal/$1/true');
-	$routes->add('add_tanggal', 'Management::add_tanggal');
+
+	$routes->group('tanggal', function($routes) {
+		$routes->add('', 'Management::tanggal');
+		$routes->add('add', 'Management::tanggal_form');	
+		$routes->add('(:num)/edit', 'Management::tanggal_form/$1');
+		$routes->add('(:num)/delete', 'Management::tanggal_form/$1');
+	});
+
+	$routes->group('jadwal', function($routes) {
+		$routes->add('', 'Management::jadwal');
+		$routes->add('add', 'Management::jadwal_form');	
+		$routes->add('(:num)/edit', 'Management::jadwal_form/$1');
+		$routes->add('(:num)/delete', 'Management::jadwal_form/$1');
+	});
+
+	$routes->group('ruangan', function($routes) {
+		$routes->add('', 'Management::ruangan');
+		$routes->add('add', 'Management::ruangan_form');	
+		$routes->add('(:num)/edit', 'Management::ruangan_form/$1');
+		$routes->add('(:num)/delete', 'Management::ruangan_form/$1');
+	});
+
 }); 
 
 

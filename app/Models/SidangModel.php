@@ -799,4 +799,18 @@ class SidangModel extends Model
 
         return $result;
     }
+
+    public function showKelompokSidang($idKelompok = "") {
+        $query = $this->db->table("t_kelompok");
+    }
+
+    public function showRuanganSidang($idRuangan = "") {
+        $query = $this->db->table("t_ruangan");
+
+        if(!empty($idRuangan)) $query = $query->where("id_ruang", $idRuangan);
+
+        $query = $query->get()->getResultObject();
+
+        return $query;
+    }
 }
