@@ -57,21 +57,21 @@ $routes->group('management', function($routes){
 		$routes->add('', 'Management::tanggal');
 		$routes->add('add', 'Management::tanggal_form');	
 		$routes->add('(:num)/edit', 'Management::tanggal_form/$1');
-		$routes->add('(:num)/delete', 'Management::tanggal_form/$1');
+		$routes->add('(:num)/delete', 'Management::tanggal_delete/$1');
 	});
 
 	$routes->group('jadwal', function($routes) {
 		$routes->add('', 'Management::jadwal');
 		$routes->add('add', 'Management::jadwal_form');	
 		$routes->add('(:num)/edit', 'Management::jadwal_form/$1');
-		$routes->add('(:num)/delete', 'Management::jadwal_form/$1');
+		$routes->add('(:num)/delete', 'Management::jadwal_delete/$1');
 	});
 
 	$routes->group('ruangan', function($routes) {
 		$routes->add('', 'Management::ruangan');
 		$routes->add('add', 'Management::ruangan_form');	
 		$routes->add('(:num)/edit', 'Management::ruangan_form/$1');
-		$routes->add('(:num)/delete', 'Management::ruangan_form/$1');
+		$routes->add('(:num)/delete', 'Management::ruangan_delete/$1');
 	});
 
 }); 

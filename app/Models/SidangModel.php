@@ -4,9 +4,19 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 use DateTime;
+use Exception;
 
 class SidangModel extends Model
 {
+    private function isDateLatest($date1, $date2): bool
+    {
+        $dateTimestamp1 = strtotime($date1);
+        $dateTimestamp2 = strtotime($date2);
+
+        if ($dateTimestamp1 > $dateTimestamp2) return true;
+        else return false;
+    }
+
     public function _mutu($n)
     {
         if ($n > 78 && $n <= 100) {
@@ -88,7 +98,7 @@ class SidangModel extends Model
     public function getUP($id_dosen, $nim, $date = "")
     {
 
-        $result = $this->getSidangDetails("proposal", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_proposal", "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
+        $result = $this->getSidangDetails("proposal", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_proposal", "tanggal_sidang as sidang_date_fmtd", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
 
         foreach ($result as $key => $item) {
             $ada_nilai = true;
@@ -121,7 +131,7 @@ class SidangModel extends Model
 
     public function getMunaqosah($id_dosen, $nim,  $date = "")
     {
-        $query = $this->getSidangDetails("munaqosah", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_munaqosah", "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
+        $query = $this->getSidangDetails("munaqosah", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_munaqosah", "tanggal_sidang as sidang_date_fmtd", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
 
         foreach ($query as $key => $item) {
             $ada_nilai = true;
@@ -159,7 +169,7 @@ class SidangModel extends Model
 
     public function getKompre($id_dosen, $nim,  $date = "")
     {
-        $query = $this->getSidangDetails("kompre", ["s_sidang.id_status", "mhs.nim", "nama_mhs",  "tgl_jadwal_sidang as sidang_date_fmtd", "tgl_jadwal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
+        $query = $this->getSidangDetails("kompre", ["s_sidang.id_status", "mhs.nim", "nama_mhs",  "tanggal_sidang as sidang_date_fmtd", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
 
         $presentase_kompre = .333333333; //must be precise!
 
@@ -200,7 +210,7 @@ class SidangModel extends Model
         $conditions = [];
 
         if (!empty($date)) {
-            $conditions = ["tgl_jadwal_sidang" => $date];
+            $conditions = ["tanggal_sidang" => $date];
         } elseif (!empty($id_dosen)) {
             $conditions = ["dsn.id_dosen" => $id_dosen];
         } elseif (!empty($nim)) {
@@ -217,7 +227,7 @@ class SidangModel extends Model
             ->join("t_dosen dsn", "status.id_dosen = dsn.id_dosen")
             ->join("t_kelompok_sidang kelompok", "sidang.id_kelompok_sidang = kelompok.id_kelompok_sidang")
             ->join("t_ruangan ruangan", "sidang.id_ruangan = ruangan.id_ruang")
-            ->join("t_jadwal_sidang jadwal", "sidang.id_jadwal_sidang = jadwal.id_jadwal_sidang")
+            ->join("t_tanggal_sidang jadwal", "sidang.id_tanggal_sidang = jadwal.id_tanggal_sidang")
             ->join("t_nilai nilai", "s_sidang.id_status = nilai.id_status", "left")
             ->where($conditions)
             ->orderBy('sidang_date', 'DESC');
@@ -232,7 +242,7 @@ class SidangModel extends Model
                 unset($it->id_status);
             }
 
-            $it->sidang_date_fmtd = $this->tglIndonesia($it->sidang_date_fmtd);
+            $it->sidang_date_fmtd = $this->tglIndonesia($it->sidang_date_fmtd, true);
         }
 
         return $query;
@@ -424,7 +434,7 @@ class SidangModel extends Model
     public function getKelompokSidang()
     {
         $query = $this->db->table("t_sidang")
-            ->join("t_jadwal_sidang", "t_sidang.id_jadwal_sidang = t_jadwal_sidang.id_jadwal_sidang")
+            ->join("t_tanggal_sidang", "t_sidang.id_tanggal_sidang = t_tanggal_sidang.id_tanggal_sidang")
             ->join("t_kelompok_sidang", "t_sidang.id_kelompok_sidang = t_kelompok_sidang.id_kelompok_sidang")
             ->join("t_ruangan", "t_sidang.id_ruangan = t_ruangan.id_ruang")
             ->orderBy("id_sidang")
@@ -433,7 +443,7 @@ class SidangModel extends Model
         $result = "";
 
         foreach ($query as $item) {
-            $tgl = $this->tglIndonesia($item->tgl_jadwal_sidang, true);
+            $tgl = $this->tglIndonesia($item->tanggal_sidang, true);
             $data =
                 $result .= "<option value='{$item->id_sidang}'>{$item->nama_kelompok_sidang} ({$tgl}, {$item->kode_ruang}/{$item->nama_ruang})</option>";
         }
@@ -452,7 +462,7 @@ class SidangModel extends Model
             ->join("t_dosen dsn", "status.id_dosen = dsn.id_dosen")
             ->join("t_kelompok_sidang kelompok", "sidang.id_kelompok_sidang = kelompok.id_kelompok_sidang")
             ->join("t_ruangan ruangan", "sidang.id_ruangan = ruangan.id_ruang")
-            ->join("t_jadwal_sidang jadwal", "sidang.id_jadwal_sidang = jadwal.id_jadwal_sidang")
+            ->join("t_tanggal_sidang jadwal", "sidang.id_tanggal_sidang = jadwal.id_tanggal_sidang")
             ->join("t_nilai nilai", "s_sidang.id_status = nilai.id_status", "left")
             ->where("mhs.nim", $keyword)
             ->orLike("mhs.nama_mhs", $keyword)
@@ -476,9 +486,9 @@ class SidangModel extends Model
 
     public function getSidangRecord($keyword)
     {
-        $up = $this->getSidangDetailsDashboard("proposal", ["mhs.nim", "mhs.nama_mhs", "tgl_jadwal_sidang as sidang_date_fmtd"], $keyword);
-        $kompre = $this->getSidangDetailsDashboard("kompre", ["mhs.nim", "mhs.nama_mhs", "tgl_jadwal_sidang as sidang_date_fmtd"], $keyword);
-        $munaqosah = $this->getSidangDetailsDashboard("munaqosah", ["mhs.nim", "mhs.nama_mhs", "tgl_jadwal_sidang as sidang_date_fmtd"], $keyword);
+        $up = $this->getSidangDetailsDashboard("proposal", ["mhs.nim", "mhs.nama_mhs", "tanggal_sidang as sidang_date_fmtd"], $keyword);
+        $kompre = $this->getSidangDetailsDashboard("kompre", ["mhs.nim", "mhs.nama_mhs", "tanggal_sidang as sidang_date_fmtd"], $keyword);
+        $munaqosah = $this->getSidangDetailsDashboard("munaqosah", ["mhs.nim", "mhs.nama_mhs", "tanggal_sidang as sidang_date_fmtd"], $keyword);
 
         if (!empty($up)) return $up;
         elseif (!empty($kompre)) return $kompre;
@@ -578,6 +588,13 @@ class SidangModel extends Model
         }
 
         return $query;
+    }
+
+    public function changeDosen($id_status, $id_dosen)
+    {
+        $fields = [
+            "id_dosen" => $id_dosen
+        ];
     }
 
     public function addStatusUP($nim, $penguji)
@@ -730,20 +747,22 @@ class SidangModel extends Model
             ->insertBatch($fields);
     }
 
-    public function getTanggalSidang($tgl = "", $id = "")
+    public function getTanggalSidang($tgl = "", $id = "", $fromToday = false)
     {
-        $result = $this->db->table("t_jadwal_sidang")
-            ->orderBy("tgl_jadwal_sidang", "asc");
+        $result = $this->db->table("t_tanggal_sidang")
+            ->orderBy("tanggal_sidang", "asc");
 
-        if (!empty($tgl)) $result = $result->where("tgl_jadwal_sidang", $tgl);
+        if (!empty($tgl)) $result = $result->where("tanggal_sidang", $tgl);
 
-        if (!empty($id)) $result = $result->where("id_jadwal_sidang", $id);
+        if (!empty($id)) $result = $result->where("id_tanggal_sidang", $id);
+
+        if ($fromToday) $result = $result->where("tanggal_sidang >", strftime("%Y-%m-%d"));
 
         $result = $result->get()->getResultObject();
 
         if (!empty($result))
             foreach ($result as $item) {
-                $item->tgl_sidang = $this->tglIndonesia($item->tgl_jadwal_sidang, true);
+                $item->tgl_sidang = $this->tglIndonesia($item->tanggal_sidang, true);
             }
 
         return $result;
@@ -751,66 +770,179 @@ class SidangModel extends Model
 
     public function addTanggalSidang($tgl)
     {
-        $tglSidang = $this->getTanggalSidang($tgl);
+        $fields = ["tanggal_sidang" => $tgl];
 
-        if(!empty($tglSidang)) return false;
-
-        $fields = ["tgl_jadwal_sidang" => $tgl];
-
-        return $this->db->table("t_jadwal_sidang")
-            ->insert($fields);
+        try {
+            return $this->db->table("t_tanggal_sidang")
+                ->insert($fields);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     public function editTanggalSidang($id, $tgl)
     {
-        $tglSidang = $this->getTanggalSidang($tgl);
 
-        if(!empty($tglSidang)) return false;
+        $fields = ["tanggal_sidang" => $tgl];
 
-        $fields = ["tgl_jadwal_sidang" => $tgl];
-
-        return $this->db->table("t_jadwal_sidang")
-            ->where("id_jadwal_sidang", $id)
-            ->update($fields);
+        try {
+            return $this->db->table("t_tanggal_sidang")
+                ->where("id_tanggal_sidang", $id)
+                ->update($fields);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
-    public function showJadwalSidang()
+    public function showJadwalSidang($id_sidang = "", $idTanggal = "", $idKelompok = "", $idRuangan = "")
     {
-        /*
-        select id_sidang, id_ruang, tgl_jadwal_sidang, nama_kelompok_sidang, nama_ruang
-        from t_sidang
-        join t_jadwal_sidang on t_sidang.id_jadwal_sidang = t_jadwal_sidang.id_jadwal_sidang
-        join t_kelompok_sidang on t_sidang.id_kelompok_sidang = t_kelompok_sidang.id_kelompok_sidang
-        join t_ruangan on t_sidang.id_ruangan = t_ruangan.id_ruang
-        order by id_sidang
-        */
-
         $result = $this->db->table("t_sidang")
-            ->select("id_sidang, kode_ruang, tgl_jadwal_sidang, nama_kelompok_sidang, nama_ruang")
-            ->join("t_jadwal_sidang", "t_sidang.id_jadwal_sidang = t_jadwal_sidang.id_jadwal_sidang")
+            ->select("*")
+            ->join("t_tanggal_sidang", "t_sidang.id_tanggal_sidang = t_tanggal_sidang.id_tanggal_sidang")
             ->join("t_kelompok_sidang", "t_sidang.id_kelompok_sidang = t_kelompok_sidang.id_kelompok_sidang")
             ->join("t_ruangan", "t_sidang.id_ruangan = t_ruangan.id_ruang")
-            ->orderBy("id_sidang")->get()->getResultObject();
+            ->orderBy("id_sidang");
+
+        if (!empty($id_sidang)) $result = $result->where("id_sidang", $id_sidang);
+
+        if (!empty($idTanggal)) $result = $result->where("t_sidang.id_tanggal_sidang", $idTanggal);
+        if (!empty($idKelompok)) $result = $result->where("t_sidang.id_kelompok_sidang", $idTanggal);
+        if (!empty($idRuangan)) $result = $result->where("id_ruangan", $idRuangan);
+
+        $result = $result->get()->getResultObject();
 
         if (!empty($result))
             foreach ($result as $item) {
-                $item->tgl_sidang_fmtd = $this->tglIndonesia($item->tgl_jadwal_sidang, true);
+                $item->tgl_sidang_fmtd = $this->tglIndonesia($item->tanggal_sidang, true);
+                $item->can_edit_tanggal = $this->isDateLatest($item->tanggal_sidang, strftime("%Y-%m-%d"));
             }
 
         return $result;
     }
 
-    public function showKelompokSidang($idKelompok = "") {
-        $query = $this->db->table("t_kelompok");
+    public function addJadwalSidang($idTanggal, $idKelompok, $idRuangan)
+    {
+
+        $dataJadwal = $this->showJadwalSidang("", $idTanggal, $idKelompok, $idRuangan);
+
+        $fields = [
+            "id_tanggal_sidang" => $idTanggal,
+            "id_kelompok_sidang" => $idKelompok,
+            "id_ruangan" => $idRuangan
+        ];
+
+        try {
+            if (!empty($dataJadwal)) return false;
+
+            return $this->db->table("t_sidang")
+                ->insert($fields);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
-    public function showRuanganSidang($idRuangan = "") {
+    public function editJadwalSidang($idJadwal, $idTanggal, $idKelompok, $idRuangan)
+    {
+
+        $dataJadwal = $this->showJadwalSidang("", $idTanggal, $idKelompok, $idRuangan);
+
+        $fields = [
+            "id_tanggal_sidang" => $idTanggal,
+            "id_kelompok_sidang" => $idKelompok,
+            "id_ruangan" => $idRuangan
+        ];
+
+        try {
+            if (!empty($dataJadwal)) return false;
+
+            return $this->db->table("t_sidang")
+                ->where("id_sidang", $idJadwal)
+                ->update($fields);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    public function showKelompokSidang($idKelompok = "")
+    {
+        $query = $this->db->table("t_kelompok_sidang");
+
+        return $query->get()->getResultObject();
+    }
+
+    public function showRuanganSidang($idRuangan = "")
+    {
         $query = $this->db->table("t_ruangan");
 
-        if(!empty($idRuangan)) $query = $query->where("id_ruang", $idRuangan);
+        if (!empty($idRuangan)) $query = $query->where("id_ruang", $idRuangan);
 
         $query = $query->get()->getResultObject();
 
         return $query;
+    }
+
+    public function addRuanganSidang($kdRuang, $namaRuang)
+    {
+        $fields = [
+            "kode_ruang" => $kdRuang,
+            "nama_ruang" => $namaRuang,
+        ];
+
+        try {
+            return $this->db->table("t_ruangan")
+                ->insert($fields);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    public function editRuanganSidang($id, $kdRuang, $namaRuang)
+    {
+
+        $fields = [
+            "kode_ruang" => $kdRuang,
+            "nama_ruang" => $namaRuang,
+        ];
+
+        try {
+            return $this->db->table("t_ruangan")
+                ->where("id_ruang", $id)
+                ->update($fields);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    public function deleteJadwalSidang($id)
+    {
+        try {
+            return $this->db->table("t_sidang")
+                ->where("id_sidang", $id)
+                ->delete();
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    public function deleteTanggalSidang($id)
+    {
+        try {
+            return $this->db->table("t_tanggal_sidang")
+                ->where("id_tanggal_sidang", $id)
+                ->delete();
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    public function deleteRuangSidang($id)
+    {
+        try {
+            return $this->db->table("t_ruangan")
+                ->where("id_ruang", $id)
+                ->delete();
+        } catch (Exception $e) {
+            return false;
+        }
     }
 }

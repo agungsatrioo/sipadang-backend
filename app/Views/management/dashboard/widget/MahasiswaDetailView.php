@@ -10,7 +10,7 @@
                     <div class="row">
                         <div class="col-lg-2">
                             <div class="avatar-circle bg-primary float-right">
-                                <span class="initials">A</span>
+                                <span class="initials"> <?= $item->nama_mhs[0] ?></span>
                             </div>
                         </div>
                         <div class="col-lg-10">
@@ -39,26 +39,92 @@
                                 </div>
                             </div>
                             <hr>
+                            <div class="row">
+                                <div class="col-lg-3">
+                                    <b>Tanggal Sidang</b>
+                                </div>
+                                <div class="col-lg-9">
+                                    <?= $item->sidang_date_fmtd ?>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-3">
+                                    <b>Kelompok Sidang</b>
+                                </div>
+                                <div class="col-lg-9">
+                                    <?= $item->nama_kelompok_sidang ?>
+                                </div>
+                            </div>
+                            <hr>
+                            <?php if (!empty($item->judul_proposal)) { ?>
+                                <div class="row">
+                                    <div class="col-lg-3">
+                                        <b>Judul</b>
+                                    </div>
+                                    <div class="col-lg-9">
+                                        <div class="row">
+                                            <div class="col-lg-10">
+                                                <?= $item->judul_proposal ?>
+                                            </div>
+                                            <div class="col-lg-2">
+                                                <a href="<?= base_url("management/judul_proposal/{$item->nim}/edit") ?>" class="btn btn-link">Edit</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php } ?>
+                            <?php if (!empty($item->judul_munaqosah)) { ?>
+                                <div class="row">
+                                    <div class="col-lg-3">
+                                        <b>Judul</b>
+                                    </div>
+                                    <div class="col-lg-9">
+                                        <div class="row">
+                                            <div class="col-lg-10">
+                                                <?= $item->judul_munaqosah ?>
+                                            </div>
+                                            <div class="col-lg-2">
+                                            <a href="<?= base_url("management/judul_munaqosah/{$item->nim}/edit") ?>" class="btn btn-link">Edit</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php } ?>
                             <?php if (!empty($item->penguji))  foreach (@$item->penguji as $eachPenguji) {  ?>
                                 <div class="row">
                                     <div class="col-lg-3">
                                         <b><?= $eachPenguji->nama_status ?></b>
                                     </div>
                                     <div class="col-lg-9">
-                                        <?= $eachPenguji->nama_dosen ?>
+                                        <div class="row">
+                                            <div class="col-lg-10">
+                                                <?= $eachPenguji->nama_dosen ?>
+                                            </div>
+                                            <div class="col-lg-2">
+                                                <a href="<?= base_url("management/status/{$eachPenguji->id_status}/edit") ?>" class="btn btn-link">Edit</a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             <?php } ?>
                             <?php if (!empty($item->pembimbing)) foreach (@$item->pembimbing as $eachPembimbing) {  ?>
                                 <div class="row">
                                     <div class="col-lg-3">
-                                        <b><?= $eachPembimbing->nama_status ?></b>
+                                        <b><?= $eachPenguji->nama_status ?></b>
                                     </div>
                                     <div class="col-lg-9">
-                                        <?= $eachPembimbing->nama_dosen ?>
+                                        <div class="row">
+                                            <div class="col-lg-10">
+                                                <?= $eachPenguji->nama_dosen ?>
+                                            </div>
+                                            <div class="col-lg-2">
+                                                <a href="<?= base_url("management/jadwal/1/edit") ?>" class="btn btn-link">Edit</a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             <?php } ?>
+                            <hr>
                             <hr>
                         </div>
                         <br>

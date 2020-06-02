@@ -38,8 +38,8 @@
                 <th scope="row"><?= ++$i ?></th>
                 <td><?= $item->tgl_sidang ?></td>
                 <td>
-                  <a href="<?= base_url("management/tanggal/{$item->id_jadwal_sidang}/edit") ?>" class="btn btn-primary">Edit</a>
-                  <a href="<?= base_url("management/tanggal/{$item->id_jadwal_sidang}/delete") ?>" class="btn btn-danger">Hapus</a>
+                  <a href="<?= base_url("management/tanggal/{$item->id_tanggal_sidang}/edit") ?>" class="btn btn-primary">Edit</a>
+                  <a href="<?= base_url("management/tanggal/{$item->id_tanggal_sidang}/delete") ?>" class="btn btn-danger">Hapus</a>
                 </td>
               </tr>
             <?php } ?>
