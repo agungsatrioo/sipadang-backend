@@ -7,7 +7,7 @@
   </div>
 
   <div class="row">
-  <?php if (!empty($error)) { ?>
+    <?php if (!empty($error)) { ?>
       <div class="col-lg-12">
         <div class="alert alert-danger">
           <?= $error ?>

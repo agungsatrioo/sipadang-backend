@@ -47,7 +47,7 @@
     </style>
 </head>
 
-<body class="<?= $paperSize ?> font-times">
+<body class="<?= $paperSize ?> font-times" onLoad="window.print()">
     <?= @$content ?>
 </body>
 

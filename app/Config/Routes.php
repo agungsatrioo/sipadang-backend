@@ -55,6 +55,15 @@ $routes->group('management', function($routes){
 	$routes->add('/', 'Management::index');
 	$routes->add('logout', 'Management::logout');
 
+	$routes->add('judul_munaqosah/(:alphanum)/edit', 'Management::ganti_judul/munaqosah/$1');
+	$routes->add('judul_proposal/(:alphanum)/edit', 'Management::ganti_judul/proposal/$1');
+
+	$routes->add('proposal/penguji/(:alphanum)/(:alphanum)/edit', "Management::ganti_dosen/proposal/penguji/$1/$2");
+	$routes->add('kompre/penguji/(:alphanum)/(:alphanum)/edit', "Management::ganti_dosen/kompre/penguji/$1/$2");
+	$routes->add('munaqosah/penguji/(:alphanum)/(:alphanum)/edit', "Management::ganti_dosen/munaqosah/penguji/$1/$2");
+	
+	$routes->add('munaqosah/pembimbing/(:alphanum)/(:alphanum)/edit', "Management::ganti_dosen/munaqosah/pembimbing/$1/$2");
+
 	$routes->group('tanggal', function($routes) {
 		$routes->add('', 'Management::tanggal');
 		$routes->add('add', 'Management::tanggal_form');	

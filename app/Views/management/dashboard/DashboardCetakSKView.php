@@ -5,6 +5,20 @@
     </div>
 
     <div class="row">
+        <?php if (!empty($error)) { ?>
+            <div class="col-lg-12">
+                <div class="alert alert-danger">
+                    <?= $error ?>
+                </div>
+            </div>
+        <?php } ?>
+        <?php if (!empty($success)) { ?>
+            <div class="col-lg-12">
+                <div class="alert alert-success">
+                    <?= $success ?>
+                </div>
+            </div>
+        <?php } ?>
         <div class="col-lg-12">
             <div class="card mb-4">
                 <div class="card-header">
@@ -23,15 +37,21 @@
                         </div>
                         <div class="col-lg-3">
                             <button type="submit" class="form-control btn btn-primary mb-2" name="rekap" value="kompre">Cetak utk. Komprehensif</button>
-                        </div
-                        ><div class="col-lg-3">
+                        </div>
+                        <div class="col-lg-3">
                             <button type="submit" class="form-control btn btn-primary mb-2" name="rekap" value="munaqosah">Cetak utk Munaqosah</button>
                         </div>
                     </div>
+                    <div class="row m-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="ya" id="withTidakLulus" name="withTidakLulus">
+                            <label class="form-check-label" for="withTidakLulus">
+                                Sertakan dengan mahasiswa yang tidak lulus
+                            </label>
+                        </div>
+                    </div>
                 </form>
-                <div class="row m-4">
-                    <?= @$mhs_result ?>
-                </div>
+
             </div>
         </div>
     </div>

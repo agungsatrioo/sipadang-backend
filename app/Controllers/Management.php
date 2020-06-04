@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\DosenModel;
 use Exception;
 
 class Management extends BaseController
@@ -71,9 +72,6 @@ class Management extends BaseController
         $request = $this->request;
 
         if (!empty($request->getPost("mahasiswaKeyword"))) {
-
-            $viewDetails = "";
-
             $sidangModel = new \App\Models\SidangModel($this->db);
             $mhsModel = new \App\Models\MahasiswaModel($this->db);
 
@@ -81,23 +79,52 @@ class Management extends BaseController
             $sidangType = $request->getPost("sidang");
 
             $listMhs = $mhsModel->findMahasiswaByKeyword($keyword);
+            $data['sidangType'] = $sidangType;
 
             if (!empty($listMhs)) {
+                $detailSidang = [];
                 switch ($sidangType) {
                     case "proposal":
-                        $detailUP = [];
                         try {
                             foreach ($listMhs as $eachMhs) {
-                                $detailUP[] = $sidangModel->getUP("", $eachMhs->nim);
+                                $sidang = $sidangModel->newUP($eachMhs->nim);
+                                if (!empty($sidang)) $detailSidang[] = $sidang;
                             }
-                            $data['detailUP'] = $detailUP;
+
+                            if (empty($detailSidang)) throw new Exception("");
+
+                            $data['detailSidang'] = $detailSidang;
                         } catch (Exception $e) {
                             session()->setFlashdata("error", "Data sidang tidak ditemukan.");
                         }
                         break;
                     case "kompre":
+                        try {
+                            foreach ($listMhs as $eachMhs) {
+                                $sidang = $sidangModel->newKompre($eachMhs->nim);
+                                if (!empty($sidang)) $detailSidang[] = $sidang;
+                            }
+
+                            if (empty($detailSidang)) throw new Exception("");
+
+                            $data['detailSidang'] = $detailSidang;
+                        } catch (Exception $e) {
+                            session()->setFlashdata("error", "Data sidang tidak ditemukan.");
+                        }
                         break;
                     case "munaqosah":
+                        try {
+                            foreach ($listMhs as $eachMhs) {
+                                $sidang = $sidangModel->newMunaqosah($eachMhs->nim);
+                                if (!empty($sidang)) $detailSidang[] = $sidang;
+                            }
+
+                            if (empty($detailSidang)) throw new Exception("");
+
+                            $data['detailSidang'] = $detailSidang;
+                        } catch (Exception $e) {
+                            session()->setFlashdata("error", "Data sidang tidak ditemukan.");
+                        }
                         break;
                 }
             } else {
@@ -114,7 +141,7 @@ class Management extends BaseController
             $cekUser = $authModel->getUser($identity);
 
             if (empty($cekUser)) {
-                //$result = $authModel->createUserMahasiswa($identity);
+                $result = $authModel->createUserMahasiswa($identity);
             }
 
             if (empty($penguji)) {
@@ -131,11 +158,9 @@ class Management extends BaseController
                         } elseif (has_dupes($penguji)) {
                             session()->setFlashdata("error", "Tiap penguji harus satu orang yang berbeda.");
                         } elseif (!empty($penguji[0]) && !empty($penguji[1])) {
-                            $statusUP = $sidangModel->addStatusUP($identity, $penguji);
-                            $sttsSidang = $sidangModel->addStatusSidang($statusUP, $kelompok);
-                            $detailSidang =  $sidangModel->addDetailSidangProposal($statusUP, $judul);
+                            $result = $sidangModel->newAddMahasiswaSidang($identity, "t_sidang_proposal", $kelompok, $judul, $penguji);
 
-                            if ($detailSidang) {
+                            if ($result) {
                                 session()->setFlashdata("success", "Data peserta sidang berhasil dimasukkan.");
                             } else {
                                 session()->setFlashdata("error", "Data peserta sidang gagal dimasukkan.");
@@ -148,11 +173,9 @@ class Management extends BaseController
                         if (has_dupes($penguji)) {
                             session()->setFlashdata("error", "Tiap penguji harus satu orang yang berbeda.");
                         } elseif (!empty($penguji[0]) && !empty($penguji[1]) && !empty($penguji[2])) {
-                            $statusUP = $sidangModel->addStatusKompre($identity, $penguji);
-                            $sttsSidang = $sidangModel->addStatusSidang($statusUP, $kelompok);
-                            $detailSidang =  $sidangModel->addDetailSidangKompre($statusUP);
+                            $result = $sidangModel->newAddMahasiswaSidang($identity, "t_sidang_kompre", $kelompok, "", $penguji);
 
-                            if ($detailSidang) {
+                            if ($result) {
                                 session()->setFlashdata("success", "Data peserta sidang berhasil dimasukkan.");
                             } else {
                                 session()->setFlashdata("error", "Data peserta sidang gagal dimasukkan.");
@@ -169,11 +192,9 @@ class Management extends BaseController
                         } elseif (has_dupes($penguji) && has_dupes($pembimbing)) {
                             session()->setFlashdata("error", "Data penguji jangan duplikat.");
                         } elseif (!empty($penguji[0]) && !empty($penguji[1]) && !empty($pembimbing[0])  && !empty($pembimbing[1])) {
-                            $statusUP = $sidangModel->addStatusMunaqosah($identity, $penguji, $pembimbing);
-                            $sttsSidang = $sidangModel->addStatusSidang($statusUP, $kelompok);
-                            $detailSidang =  $sidangModel->addDetailSidangMunaqosah($statusUP, $judul);
+                            $result = $sidangModel->newAddMahasiswaSidang($identity, "t_sidang_munaqosah", $kelompok, $judul, $penguji, $pembimbing);
 
-                            if ($detailSidang) {
+                            if ($result) {
                                 session()->setFlashdata("success", "Data peserta sidang berhasil dimasukkan.");
                             } else {
                                 session()->setFlashdata("error", "Data peserta sidang gagal dimasukkan.");
@@ -187,8 +208,135 @@ class Management extends BaseController
         }
 
         $data['result'] = view("management/dashboard/widget/MahasiswaDetailView.php", $data);
+        
         $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
         $data['dashboard_page'] = view("management/dashboard/DashboardPendaftarSidangView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function ganti_judul($type, $nim)
+    {
+        $sidangModel = new \App\Models\SidangModel($this->db);
+
+        $detailSidang = [];
+        $namaJudul = "";
+        $request = $this->request;
+        $table = "";
+
+        switch ($type) {
+            case "proposal":
+                $data['title'] = "Management - Ganti Judul Proposal";
+                $data['header'] = "Ganti Judul Proposal";
+                $namaJudul = "judul_proposal";
+                $table = "t_sidang_proposal";
+                $data['action_url'] = base_url("management/judul_proposal/$nim/edit");
+                break;
+            case "munaqosah":
+                $data['title'] = "Management - Ganti Judul Munaqosah";
+                $data['header'] = "Ganti Judul Munaqosah";
+                $namaJudul = "judul_munaqosah";
+                $table = "t_sidang_munaqosah";
+                $data['action_url'] = base_url("management/judul_munaqosah/$nim/edit");
+                break;
+        }
+
+        if (!empty($request->getPost("add"))) {
+            $judul = $request->getPost("judul");
+
+            $result = $sidangModel->editJudul($table, $nim, $namaJudul, $judul);
+
+            if ($result) {
+                session()->setFlashdata("success", "Berhasil mengedit judul.");
+            } else {
+                session()->setFlashdata("error", "Gagal mengedit judul.");
+            }
+        }
+
+        switch ($type) {
+            case "proposal":
+                $detailSidang = $sidangModel->newUP($nim);
+                break;
+            case "munaqosah":
+                $detailSidang = $sidangModel->newMunaqosah($nim);
+                break;
+        }
+
+        if (!empty($detailSidang)) {
+            $data['nim'] = "<input type='hidden' name='nim' value='$nim'>";
+
+            $data['judulSidang'] = $detailSidang->$namaJudul;
+        }
+
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardJudulFormView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function ganti_dosen($table, $type, $nim, $idDosenSidang)
+    {
+        $sidangModel = new \App\Models\SidangModel($this->db);
+        $dosenModel = new DosenModel($this->db);
+
+        $detailSidang = [];
+        $request = $this->request;
+
+        $data['title'] = "Management - Ganti Dosen";
+        $data['header'] = "Ganti Dosen";
+
+        $data['option_dosen'] =  $dosenModel->dosenOptionList();
+
+        $data['action_url'] = base_url("management/$table/$type/$nim/$idDosenSidang/edit");
+
+        switch ($table) {
+            case "proposal":
+                $table = "t_sidang_proposal";
+                break;
+            case "kompre":
+                $table = "t_sidang_kompre";
+                break;
+            case "munaqosah":
+                $table = "t_sidang_munaqosah";
+                break;
+        }
+
+        if (!empty($request->getPost("add"))) {
+            $dosen = $request->getPost("dosen");
+
+            $result = $sidangModel->newEditDosen($table, $nim, $idDosenSidang, $dosen);
+
+            if ($result) {
+                session()->setFlashdata("success", "Berhasil mengedit judul.");
+            } else {
+                session()->setFlashdata("error", "Gagal mengedit judul.");
+            }
+        }
+
+        switch ($table) {
+            case "t_sidang_proposal":
+                $detailSidang = $sidangModel->newUP($nim);
+                break;
+            case "t_sidang_kompre":
+                $detailSidang = $sidangModel->newKompre($nim);
+                break;
+            case "t_sidang_munaqosah":
+                $detailSidang = $sidangModel->newMunaqosah($nim);
+                break;
+        }
+
+        if (!empty($detailSidang)) {
+            $data['val_id_dosen'] = $detailSidang->$type[$idDosenSidang]->id_dosen;
+        }
+
+
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardGantiDosenView", $data);
 
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
@@ -351,7 +499,8 @@ class Management extends BaseController
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
     }
 
-    public function jadwal_delete($id) {
+    public function jadwal_delete($id)
+    {
         $sidangModel = new \App\Models\SidangModel($this->db);
 
         $result = $sidangModel->deleteJadwalSidang($id);
@@ -366,7 +515,8 @@ class Management extends BaseController
     }
 
 
-    public function tanggal_delete($id) {
+    public function tanggal_delete($id)
+    {
         $sidangModel = new \App\Models\SidangModel($this->db);
 
         $result = $sidangModel->deleteTanggalSidang($id);
@@ -381,7 +531,8 @@ class Management extends BaseController
     }
 
 
-    public function ruangan_delete($id) {
+    public function ruangan_delete($id)
+    {
         $sidangModel = new \App\Models\SidangModel($this->db);
 
         $result = $sidangModel->deleteJadwalSidang($id);
@@ -473,6 +624,9 @@ class Management extends BaseController
     {
         $data['title'] = "Management - Cetak";
 
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
+
         $data['dashboard_page'] = view("management/dashboard/DashboardCetakSKView", $data);
 
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
@@ -504,21 +658,31 @@ class Management extends BaseController
     {
         $type = $this->request->getPost("rekap");
         $tanggal = $this->request->getPost("rekap_tgl");
+        $withTidakLulus = $this->request->getPost("withTidakLulus");
+
+        $result = [];
 
         switch ($type) {
             case "proposal":
-                return $this->rekap_up("$tanggal");
+                $result = $this->rekap_up("$tanggal", isset($withTidakLulus) ? true : false);
+            break;
             case "kompre":
-                return $this->rekap_kompre("$tanggal");
+                $result = $this->rekap_kompre("$tanggal", isset($withTidakLulus) ? true : false);
+            break;
             case "munaqosah":
-                return $this->rekap_munaqosah("$tanggal");
+                $result = $this->rekap_munaqosah("$tanggal", isset($withTidakLulus) ? true : false);
+            break;
             default:
-
                 break;
         }
+
+        if(empty($result)) {
+            session()->setFlashdata("error", "Tidak ada data pada tanggal yang dipilih.");
+            return redirect()->to("cetak");
+        } else echo $result;
     }
 
-    private function rekap_up($tanggal)
+    private function rekap_up($tanggal, $withTidakLulus)
     {
 
         $maxMhs = 6;
@@ -529,7 +693,6 @@ class Management extends BaseController
 
         $sidangModel = new \App\Models\SidangModel($this->db);
         $paperModel = new \App\Models\PaperModel($this->db);
-
 
         $tglInSurat = $sidangModel->tglIndonesia($tanggal, true);
 
@@ -542,22 +705,14 @@ class Management extends BaseController
 
         $dataUP = $sidangModel->getRekapUP($tanggal);
 
-        $dataUP = array_filter($dataUP, function ($obj) {
-            static $idList = array();
+        if(empty($dataUP)) return [];
 
-            $includeTidakLulus = true;
-
-            if ($includeTidakLulus) {
-                //if (!is_numeric($obj->nilai['nilai'])) return false;
-            }
-
-            if (in_array($obj->nim, $idList)) {
-                return false;
-            }
-
-            $idList[] = $obj->nim;
-            return true;
-        });
+        if (!$withTidakLulus) {
+            $dataUP = array_filter($dataUP, function ($obj) {
+                if (!is_numeric($obj->nilai['nilai'])) return false;
+                return true;
+            });
+        }
 
         foreach ($dataUP as $item) {
             $dataUPfinal[$item->id_kelompok_sidang]["name"] = $item->nama_kelompok_sidang;
@@ -723,10 +878,10 @@ class Management extends BaseController
             $data['content'] .= $currPage . $newPage;
         }
 
-        echo $this->renderPaper($data);
+        return $this->renderPaper($data);
     }
 
-    public function rekap_kompre($tanggal)
+    private function rekap_kompre($tanggal, $withTidakLulus)
     {
 
         $maxMhs = 6;
@@ -749,22 +904,14 @@ class Management extends BaseController
 
         $dataUP = $sidangModel->getRekapKompre($tanggal);
 
-        $dataUP = array_filter($dataUP, function ($obj) {
-            static $idList = array();
+        if(empty($dataUP)) return [];
 
-            $includeTidakLulus = false;
-
-            if ($includeTidakLulus) {
+        if (!$withTidakLulus) {
+            $dataUP = array_filter($dataUP, function ($obj) {
                 if (!is_numeric($obj->nilai['nilai'])) return false;
-            }
-
-            if (in_array($obj->nim, $idList)) {
-                return false;
-            }
-
-            $idList[] = $obj->nim;
-            return true;
-        });
+                return true;
+            });
+        }
 
         foreach ($dataUP as $item) {
             $dataUPfinal[$item->id_kelompok_sidang]["name"] = $item->nama_kelompok_sidang;
@@ -945,10 +1092,10 @@ class Management extends BaseController
             $data['content'] .= $currPage . $newPage;
         }
 
-        echo $this->renderPaper($data);
+        return $this->renderPaper($data);
     }
 
-    public function rekap_munaqosah($tanggal)
+    private function rekap_munaqosah($tanggal, $withTidakLulus)
     {
 
         $maxMhs = 6;
@@ -971,22 +1118,14 @@ class Management extends BaseController
 
         $dataUP = $sidangModel->getRekapMunaqosah($tanggal);
 
-        $dataUP = array_filter($dataUP, function ($obj) {
-            static $idList = array();
+        if (!$withTidakLulus) {
+            $dataUP = array_filter($dataUP, function ($obj) {
+                if (!is_numeric($obj->nilai['nilai'])) return false;
+                return true;
+            });
+        }
 
-            $includeTidakLulus = true;
-
-            if ($includeTidakLulus) {
-                //if (!is_numeric($obj->nilai['nilai'])) return false;
-            }
-
-            if (in_array($obj->nim, $idList)) {
-                return false;
-            }
-
-            $idList[] = $obj->nim;
-            return true;
-        });
+        if(empty($dataUP)) return [];
 
         foreach ($dataUP as $item) {
             $dataUPfinal[$item->id_kelompok_sidang]["name"] = $item->nama_kelompok_sidang;
@@ -1173,7 +1312,7 @@ class Management extends BaseController
             $data['content'] .= $currPage . $newPage;
         }
 
-        echo $this->renderPaper($data);
+        return $this->renderPaper($data);
     }
 
     public function logout()
@@ -1181,5 +1320,9 @@ class Management extends BaseController
         session()->destroy();
 
         return redirect("management");
+    }
+
+    public function mhs()
+    {
     }
 }

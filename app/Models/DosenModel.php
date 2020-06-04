@@ -40,4 +40,13 @@ class DosenModel extends Model
 
 		return $result;
 	}
+
+	public function dosenOptionList() {
+		return $this->db->table("t_dosen")
+		->select([
+			"id_dosen",
+			"CONCAT(t_dosen.nama_dosen, '', IFNULL(t_dosen.gelar_depan, '')) as nama_dosen",
+		])
+		->get()->getResultObject();
+	}
 }

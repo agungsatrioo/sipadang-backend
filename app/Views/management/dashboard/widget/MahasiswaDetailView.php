@@ -1,4 +1,4 @@
-<?php if (!empty(@$detailUP)) foreach ($detailUP as $item) { ?>
+<?php if (!empty(@$detailSidang)) foreach ($detailSidang as $item) { ?>
     <div class="row">
         <div class="col-lg-12">
             <!-- Basic Card Example -->
@@ -72,6 +72,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                <br>
                             <?php } ?>
                             <?php if (!empty($item->judul_munaqosah)) { ?>
                                 <div class="row">
@@ -83,12 +84,15 @@
                                             <div class="col-lg-10">
                                                 <?= $item->judul_munaqosah ?>
                                             </div>
+                                            <!--
                                             <div class="col-lg-2">
                                             <a href="<?= base_url("management/judul_munaqosah/{$item->nim}/edit") ?>" class="btn btn-link">Edit</a>
                                             </div>
+                                            -->
                                         </div>
                                     </div>
                                 </div>
+                                <br>
                             <?php } ?>
                             <?php if (!empty($item->penguji))  foreach (@$item->penguji as $eachPenguji) {  ?>
                                 <div class="row">
@@ -100,9 +104,11 @@
                                             <div class="col-lg-10">
                                                 <?= $eachPenguji->nama_dosen ?>
                                             </div>
+                                            
                                             <div class="col-lg-2">
-                                                <a href="<?= base_url("management/status/{$eachPenguji->id_status}/edit") ?>" class="btn btn-link">Edit</a>
+                                                <a href="<?= base_url("management/$sidangType/penguji/{$item->nim}/{$eachPenguji->id_status}/edit") ?>" class="btn btn-link">Edit</a>
                                             </div>
+                                            
                                         </div>
                                     </div>
                                 </div>
@@ -110,22 +116,20 @@
                             <?php if (!empty($item->pembimbing)) foreach (@$item->pembimbing as $eachPembimbing) {  ?>
                                 <div class="row">
                                     <div class="col-lg-3">
-                                        <b><?= $eachPenguji->nama_status ?></b>
+                                        <b><?= $eachPembimbing->nama_status ?> </b>
                                     </div>
                                     <div class="col-lg-9">
                                         <div class="row">
                                             <div class="col-lg-10">
-                                                <?= $eachPenguji->nama_dosen ?>
+                                                <?= $eachPembimbing->nama_dosen ?>
                                             </div>
                                             <div class="col-lg-2">
-                                                <a href="<?= base_url("management/jadwal/1/edit") ?>" class="btn btn-link">Edit</a>
+                                                <a href="<?= base_url("management/$sidangType/pembimbing/{$item->nim}/{$eachPembimbing->id_status}/edit") ?>" class="btn btn-link">Edit</a>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             <?php } ?>
-                            <hr>
-                            <hr>
                         </div>
                         <br>
 
