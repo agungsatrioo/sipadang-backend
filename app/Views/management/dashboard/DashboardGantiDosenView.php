@@ -30,7 +30,7 @@
                             <select class="form-control" name="dosen" required>
                                 <option disabled selected>Pilih dosen sidang</option>
                                 <?php foreach ($option_dosen as $item) { ?>
-                                    <option value="<?= $item->id_dosen ?>" <?= $item->id_dosen == @$val_id_dosen ? "selected" : "" ?>><?= $item->nama_dosen ?></option>
+                                    <option value="<?= $item->id_dosen ?>" <?= $item->id_dosen == @$val_id_dosen ? "selected" : "" ?>><?= "($item->id_dosen) $item->nama_dosen" ?></option>
                                 <?php } ?>
                             </select>
                         </div>

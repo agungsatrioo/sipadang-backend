@@ -27,27 +27,27 @@
                 </div>
                 <div class="card-body">
                     <p>Cari mahasiswa sidang dengan mengetik nama mahasiswa yang bersangkutan pada form di bawah ini.</p>
-                </div>
-                <form action="<?= base_url("management/list_sidang") ?>" method="post">
-                    <div class="row m-2">
-                        <div class="col-lg-6">
-                            <input type="text" class="form-control" name="mahasiswaKeyword" required>
+                    <form action="<?= base_url("management/list_sidang") ?>" method="post">
+                        <div class="row m-2">
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" name="mahasiswaKeyword" required>
+                            </div>
+                            <div class="col-lg-5">
+                                <select class="form-control" id="jenis_sidang" name="sidang" required>
+                                    <option disabled selected>Pilih jenis sidang</option>
+                                    <option value="proposal">Ujian Proposal</option>
+                                    <option value="kompre">Ujian Komprehensif</option>
+                                    <option value="munaqosah">Ujian Munaqosah</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-1">
+                                <button type="submit" class="btn btn-primary mb-2">Cari</button>
+                            </div>
                         </div>
-                        <div class="col-lg-5">
-                            <select class="form-control" id="jenis_sidang" name="sidang" required>
-                                <option disabled selected>Pilih jenis sidang</option>
-                                <option value="proposal">Ujian Proposal</option>
-                                <option value="kompre">Ujian Komprehensif</option>
-                                <option value="munaqosah">Ujian Munaqosah</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-1">
-                            <button type="submit" class="btn btn-primary mb-2">Cari</button>
-                        </div>
+                    </form>
+                    <div class="row m-4">
+                        <?= @$mhs_result ?>
                     </div>
-                </form>
-                <div class="row m-4">
-                    <?= @$mhs_result ?>
                 </div>
             </div>
         </div>

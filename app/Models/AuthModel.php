@@ -163,4 +163,30 @@ EOD;
            return ["status" => "failed", "code" => 401, "msg" => "Gagal membuat pengguna"];
         }
     }
+
+    public function resetLupaPassword($identity) {
+        $mhsModel = new \App\Models\MahasiswaModel($this->db);
+        $dosenModel = new \App\Models\DosenModel($this->db);
+
+        if (empty($identity))  return false;
+
+        $cekMhs = $mhsModel->findMahasiswa($identity);
+        $cekDosen = $dosenModel->findDosen($identity);
+
+        if (!empty($cekMhs->getRowArray())) {
+            $identity = $cekMhs->getFirstRow()->user_identity;
+        } elseif (!empty($cekDosen->getRowArray())) {
+            $identity = $cekDosen->getFirstRow()->user_identity;
+        } else {
+            return false;
+        }
+
+        $result = $this->db->table("t_pengguna")
+        ->where("identity", $identity)
+        ->update(["password_changed" => 0, "password" => password_hash("mahasiswa", PASSWORD_DEFAULT)]);
+
+        return $result;
+
+
+    }
 }

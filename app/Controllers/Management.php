@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\AuthModel;
 use App\Models\DosenModel;
 use Exception;
 
@@ -23,6 +24,9 @@ class Management extends BaseController
             ["type" => "hr"],
             ["type" => "header", "Cetak"],
             ["type" => "item", "Cetak Rekapitulasi", base_url("management/cetak"), "fa-print"],
+            ["type" => "hr"],
+            ["type" => "header", "Autentikasi"],
+            ["type" => "item", "Reset Kata Sandi", base_url("management/reset_password"), "fa-key"],
         ];
 
         foreach ($menus as $menuItem) {
@@ -208,7 +212,7 @@ class Management extends BaseController
         }
 
         $data['result'] = view("management/dashboard/widget/MahasiswaDetailView.php", $data);
-        
+
         $data['error'] = session()->getFlashdata("error");
         $data['success'] = session()->getFlashdata("success");
         $data['dashboard_page'] = view("management/dashboard/DashboardPendaftarSidangView", $data);
@@ -665,18 +669,18 @@ class Management extends BaseController
         switch ($type) {
             case "proposal":
                 $result = $this->rekap_up("$tanggal", isset($withTidakLulus) ? true : false);
-            break;
+                break;
             case "kompre":
                 $result = $this->rekap_kompre("$tanggal", isset($withTidakLulus) ? true : false);
-            break;
+                break;
             case "munaqosah":
                 $result = $this->rekap_munaqosah("$tanggal", isset($withTidakLulus) ? true : false);
-            break;
+                break;
             default:
                 break;
         }
 
-        if(empty($result)) {
+        if (empty($result)) {
             session()->setFlashdata("error", "Tidak ada data pada tanggal yang dipilih.");
             return redirect()->to("cetak");
         } else echo $result;
@@ -705,7 +709,7 @@ class Management extends BaseController
 
         $dataUP = $sidangModel->getRekapUP($tanggal);
 
-        if(empty($dataUP)) return [];
+        if (empty($dataUP)) return [];
 
         if (!$withTidakLulus) {
             $dataUP = array_filter($dataUP, function ($obj) {
@@ -904,7 +908,7 @@ class Management extends BaseController
 
         $dataUP = $sidangModel->getRekapKompre($tanggal);
 
-        if(empty($dataUP)) return [];
+        if (empty($dataUP)) return [];
 
         if (!$withTidakLulus) {
             $dataUP = array_filter($dataUP, function ($obj) {
@@ -1125,7 +1129,7 @@ class Management extends BaseController
             });
         }
 
-        if(empty($dataUP)) return [];
+        if (empty($dataUP)) return [];
 
         foreach ($dataUP as $item) {
             $dataUPfinal[$item->id_kelompok_sidang]["name"] = $item->nama_kelompok_sidang;
@@ -1315,12 +1319,45 @@ class Management extends BaseController
         return $this->renderPaper($data);
     }
 
+    public function reset_password()
+    {
+        $data['title'] = "Management- Ganti Kata Sandi";
+        $data['action_url'] = base_url("management/reset_password");
+
+        $request = $this->request;
+
+        if(!empty($request->getPost("act"))) {
+            $authModel = new AuthModel($this->db);
+            $id = $request->getPost("identity");
+
+            $cekUser = $authModel->getUser($id);
+
+            if(empty($cekUser)) session()->setFlashdata("error", "Identitas yang dimasukkan tidak ada.");
+
+            $result = $authModel->resetLupaPassword($id);
+
+            if ($result) {
+                session()->setFlashdata("success", "Berhasil mengatur ulang kata sandi.");
+            } else {
+                session()->setFlashdata("error", "Gagal mengatur ulang kata sandi.");
+            }
+        }
+
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardResetPasswordView.php", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
     public function logout()
     {
         session()->destroy();
 
         return redirect("management");
     }
+
 
     public function mhs()
     {
