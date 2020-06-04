@@ -29,6 +29,8 @@ class Inputapi extends ResourceController
 				return "Data yang Anda masukkan sudah ada sebelumnya.";
 			case 1053:
 				return "Server sedang dimatikan.";
+            case 92:
+                return "Tidak dapat mengubah kata sandi.";
 			default:
 				return "Kesalahan yang tidak diketahui. Silakan hubungi administrator.";
 		}
@@ -63,7 +65,13 @@ class Inputapi extends ResourceController
 	{
 		switch ($result) {
 			case "ok":
+            case true:
 				return $this->respond(["info" => "ok"], 200);
+            case false:
+                return $this->respond([
+					"code" => 400,
+					"error" => $this->explain_error(400)
+				], 400);
 			default:
 				return $this->respond([
 					"code" => $result,
@@ -81,6 +89,7 @@ class Inputapi extends ResourceController
 
 	public function mahasiswa($nim = null)
 	{
+        //DONE JANGAN DIOPREK
 		$mhsModel = new \App\Models\MahasiswaModel($this->db);
 
 		$query = $mhsModel->findMahasiswa($nim);
@@ -151,13 +160,11 @@ class Inputapi extends ResourceController
 
 		$data = $this->request;
 
-		$id_status = $data->getGet('id_status');
+		$table = $data->getGet('table');
+		$nim    = $data->getGet('mahasiswa');
+		$dosen  = $data->getGet('id_dosen');
 
-		$query = $sidangModel->cekNilai($id_status);
-
-		foreach ($query as $key => $item) {
-			$item->color = $sidangModel->warna($item->nilai);
-		}
+		$query = $sidangModel->newCekNilai($table, $nim, $dosen);
 
 		if (empty($query)) $query = [["nilai" => "Belum ada", "mutu" => "Belum ada", "color" => "#000000"]];
 
@@ -172,19 +179,12 @@ class Inputapi extends ResourceController
 
 		$data = $this->request;
 
-		$status = $data->getGet('id_status');
-		$mhs    = $data->getGet('mahasiswa');
-		$revid  = $data->getGet('id_revisi');
+		$table = $data->getGet('table');
+		$nim    = $data->getGet('mahasiswa');
+		$dosen  = $data->getGet('dosen');
+		$id_revisi  = $data->getGet('id_revisi');
 
-		$result = [];
-
-		if (isset($status)) {
-			$result =  $sidangModel->getRevisi(["t_status.id_status" => $status]);
-		} elseif (isset($mhs)) {
-			$result = $sidangModel->getRevisi(["t_mahasiswa.nim" => $mhs]);
-		} elseif (isset($revid)) {
-			$result = $sidangModel->getRevisi(["id_revisi" => $revid]);
-		}
+		$result = $sidangModel->newCekRevisi($table, $nim, $dosen, $id_revisi);
 
 		return $this->respond($result, 200);
 	}
@@ -197,18 +197,20 @@ class Inputapi extends ResourceController
 
 		$data = $this->request;
 
-		$id         = $edit ? $data->getRawInput()['id_status'] : $data->getPost("id_status");
-		$id_revisi    = $edit ? $data->getRawInput()['id_revisi'] : null;
+		$table      = $edit ? $data->getRawInput()['table'] : $data->getPost("table");
+		$nim        = $edit ? $data->getRawInput()['mahasiswa'] : $data->getPost("mahasiswa");
+		$id_dosen   = $edit ? $data->getRawInput()['dosen'] : $data->getPost("dosen");
+
+		$id_revisi  = $edit ? $data->getRawInput()['id_revisi'] : null;
+
 		$details    = $edit ? $data->getRawInput()['detail_revisi'] : $data->getPost("detail_revisi");
 		$deadline   = $edit ? $data->getRawInput()['tgl_revisi_deadline'] : $data->getPost("tgl_revisi_deadline");
-		$status     = $edit ? $data->getRawInput()['status_revisi'] : $data->getPost("status_revisi");
 
 		try {
-			$result = $edit ? $sidangModel->editRevisi($id_revisi, $id, $details, $deadline) : $sidangModel->addRevisi($id, $details, $deadline, $status);
+			$result = !$edit ? $sidangModel->newAddRevisi($table, $nim, $id_dosen, $details, $deadline) : $sidangModel->newEditRevisi($table, $nim, $id_revisi, $id_dosen, $details, $deadline);
 
 			return $this->my_response($result);
 		} catch (Exception $e) {
-			print_r($e);
 			return $this->my_response("1069");
 		}
 	}
@@ -221,12 +223,14 @@ class Inputapi extends ResourceController
 
 		$data = $this->request;
 
-		$id_status =  $data->getRawInput()['id_status'];
-		$id_revisi =  $data->getRawInput()['id_revisi'];
+		$table      = $data->getRawInput()['table'];
+		$nim        = $data->getRawInput()['mahasiswa'];
+		$dosen   = $data->getRawInput()['dosen'];
+		$id_revisi  = $data->getRawInput()['id_revisi'];
 
-		if (isset($id_status)) {
+		if (isset($id_revisi)) {
 			try {
-				$result = $sidangModel->deleteRevisi($id_revisi, $id_status);
+				$result = $sidangModel->newDeleteRevisi($table, $nim, $id_revisi, $dosen);
 
 				return $this->my_response($result);
 			} catch (Exception $e) {
@@ -245,28 +249,37 @@ class Inputapi extends ResourceController
 
 		$data = $this->request;
 
-		$id_status         = $data->getRawInput()['id_status'];
-		$id_revisi         = $data->getRawInput()['id_revisi'];
-		$status         = $data->getRawInput()['status'];
+		$table      = $data->getRawInput()['table'];
+		$nim        = $data->getRawInput()['mahasiswa'];
+		$id_dosen   = $data->getRawInput()['dosen'];
+		$id_revisi  = $data->getRawInput()['id_revisi'];
+		$status  = $data->getRawInput()['status_revisi'];
 
-		try {
-			$result = $sidangModel->markRevisi($id_revisi, $id_status, $status);
+		if (isset($id_revisi)) {
+			try {
+				$result = $sidangModel->newSetRevisiStatus($table, $nim, $id_revisi, $id_dosen, $status);
 
-			return $this->my_response($result);
-		} catch (Exception $e) {
-			return $this->my_response("1066");
+				return $this->my_response($result);
+			} catch (Exception $e) {
+				return $this->my_response("1066");
+			}
+		} else {
+			return $this->respond($this->error_response(["error" => "You are denied access to this operation."], 401), 401);
 		}
 	}
 
 	public function input_nilai($edit = false)
 	{
+        //DONE!
 		if (!$this->verifyApp()) return $this->respond($this->error_response(["error" => "You are denied access to this operation."], 401), 401);
 
 		$sidangModel = new \App\Models\SidangModel($this->db);
 
 		$data = $this->request;
 
-		$id = $edit ? $data->getRawInput()['id_status'] : $data->getPost("id_status");
+		$table = $edit ? $data->getRawInput()['table'] : $data->getPost("table");
+		$nim = $edit ? $data->getRawInput()['nim'] : $data->getPost("nim");
+		$dosen = $edit ? $data->getRawInput()['id_dosen'] : $data->getPost("id_dosen");
 		$nilai = $edit ? $data->getRawInput()['nilai'] : $data->getPost("nilai");
 
 		if (!is_numeric($nilai)) {
@@ -274,7 +287,7 @@ class Inputapi extends ResourceController
 		} else {
 			if ($nilai > 0 && $nilai <= 100) {
 				try {
-					$result = $edit ? $sidangModel->editNilai($id, $nilai) : $sidangModel->inputNilai($id, $nilai);
+					$result = $sidangModel->newEditNilai($table, $nim, $dosen, intval($nilai));
 
 					return $this->my_response($result);
 				} catch (Exception $e) {
@@ -299,4 +312,36 @@ class Inputapi extends ResourceController
 
 		return $this->respond($result, 200);
 	}
+
+    public function is_first_run($id) {
+        $authModel = new \App\Models\AuthModel($this->db);
+
+        $user = $authModel->getUser($id);
+
+        $result = !empty($user) && $user->password_changed == 0 ? true : false;
+
+        return $this->respond(["result" => $result], 200);
+    }
+
+    public function ganti_sandi()
+    {
+        if (!$this->verifyApp()) return $this->respond($this->error_response(["error" => "You are denied access to this operation."], 401), 401);
+
+        $data = $this->request;
+
+		$identity = $data->getPost("identity");
+		$password = $data->getPost("password");
+
+        $fields = ["password" => password_hash($password, PASSWORD_DEFAULT),  "password_changed" => "1"];
+
+        try {
+            $result = $this->db->table("t_pengguna")
+                ->where(["identity" => $identity, "password_changed" => "0"])
+                ->update($fields);
+
+            return $this->my_response($result);
+        } catch (Exception $e) {
+            return $this->my_response("92");
+        }
+    }
 }

@@ -35,6 +35,8 @@ $routes->get('/', 'Home::index');
 $routes->get('inputapi/mahasiswa', 'Inputapi::mahasiswa');
 $routes->get('inputapi/mahasiswa/(:segment)', 'Inputapi::mahasiswa/$1');
 
+$routes->get('inputapi/is_first_run/(:segment)', 'Inputapi::is_first_run/$1');
+
 $routes->get('inputapi/revisi', 'Inputapi::get_revisi');
 $routes->post('inputapi/revisi', 'Inputapi::input_revisi');
 $routes->put('inputapi/revisi', 'Inputapi::input_revisi/true');

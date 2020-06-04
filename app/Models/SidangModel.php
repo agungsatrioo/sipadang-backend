@@ -5,6 +5,7 @@ namespace App\Models;
 use CodeIgniter\Model;
 use DateTime;
 use Exception;
+use stdClass;
 
 class SidangModel extends Model
 {
@@ -97,155 +98,17 @@ class SidangModel extends Model
 
     public function getUP($id_dosen, $nim, $date = "")
     {
-
-        $result = $this->getSidangDetails("proposal", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_proposal", "tanggal_sidang as sidang_date_fmtd", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
-
-        foreach ($result as $key => $item) {
-            $ada_nilai = true;
-
-            if (!empty($nim)) {
-                $penguji        = $this->getStatusDosenDiSidang($item->nim, "Penguji Sidang Proposal %");
-                $item->penguji  = $penguji;
-
-                foreach ($item->penguji as $k1 => $v1) {
-                    if (!is_numeric($v1->nilai)) {
-                        $item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
-                        $ada_nilai   = false;
-                        break;
-                    }
-                }
-
-                if ($ada_nilai) {
-                    $nilai = (.5 * $item->penguji[0]->nilai) + (.5 * $item->penguji[1]->nilai);
-                    $item->nilai = ["nilai" => floor($nilai), "mutu" => $this->_mutu($nilai), "color" => $this->warna($nilai)];
-                }
-
-                break;
-            } else {
-                $item->nilai = $this->cekNilai($item->id_status)[0];
-            }
-        }
-
-        return !empty($nim) ? $result[0] : $result;
+        return $this->newUP($nim, $id_dosen, $date);
     }
 
     public function getMunaqosah($id_dosen, $nim,  $date = "")
     {
-        $query = $this->getSidangDetails("munaqosah", ["s_sidang.id_status", "mhs.nim", "nama_mhs", "judul_munaqosah", "tanggal_sidang as sidang_date_fmtd", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
-
-        foreach ($query as $key => $item) {
-            $ada_nilai = true;
-
-            if (!empty($nim)) {
-                $penguji        = $this->getStatusDosenDiSidang($item->nim, "Penguji Sidang Munaqosah %");
-                $pembimbing        = $this->getStatusDosenDiSidang($item->nim, "Pembimbing Munaqosah %");
-                $dosenku        = $this->getStatusDosenDiSidang($item->nim, "Munaqosah %");
-
-                $item->penguji  = $penguji;
-                $item->pembimbing  = $pembimbing;
-
-                foreach ($dosenku as $k1 => $v1) {
-                    if (!is_numeric($v1->nilai)) {
-                        $item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
-                        $ada_nilai   = false;
-                        break;
-                    }
-                }
-
-                if ($ada_nilai) {
-                    $nilai = (.3 * $item->penguji[0]->nilai) + (.3 * $item->penguji[1]->nilai) +  (.2 * $item->pembimbing[0]->nilai) + (.2 * $item->pembimbing[1]->nilai);
-
-                    $item->nilai = ["nilai" => floor($nilai), "mutu" => $this->_mutu($nilai), "color" => $this->warna($nilai)];
-                }
-
-                break;
-            } else {
-                $item->nilai = $this->cekNilai($item->id_status)[0];
-            }
-        }
-
-        return !empty($nim) ? $query[0] : $query;
+        return $this->newMunaqosah($nim, $id_dosen);
     }
 
     public function getKompre($id_dosen, $nim,  $date = "")
     {
-        $query = $this->getSidangDetails("kompre", ["s_sidang.id_status", "mhs.nim", "nama_mhs",  "tanggal_sidang as sidang_date_fmtd", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nilai", "nama_jur"], $id_dosen, $nim, $date);
-
-        $presentase_kompre = .333333333; //must be precise!
-
-        foreach ($query as $key => $item) {
-            $ada_nilai = true;
-
-            if (!empty($nim)) {
-                $penguji        = $this->getStatusDosenDiSidang($item->nim, "Penguji Sidang Komprehensif %");
-                $item->penguji  = $penguji;
-
-                foreach ($item->penguji as $k1 => $v1) {
-                    if (!is_numeric($v1->nilai)) {
-                        $item->nilai = ["nilai" => $v1->nilai, "mutu" => $v1->mutu, "color" => $v1->color];
-                        $ada_nilai   = false;
-                        break;
-                    }
-                }
-
-                if ($ada_nilai) {
-                    $nilai = ($presentase_kompre * $item->penguji[0]->nilai) + ($presentase_kompre * $item->penguji[1]->nilai) + ($presentase_kompre * $item->penguji[2]->nilai);
-
-                    if ($nilai > 100) $nilai = 100;
-
-                    $item->nilai = ["nilai" => floor($nilai), "mutu" => $this->_mutu($nilai), "color" => $this->warna($nilai)];
-                }
-
-                break;
-            } else {
-                $item->nilai = $this->cekNilai($item->id_status)[0];
-            }
-        }
-
-        return !empty($nim) ? $query[0] : $query;
-    }
-
-    private function getSidangDetails($table, $fields, $id_dosen, $nim, $date = "")
-    {
-        $conditions = [];
-
-        if (!empty($date)) {
-            $conditions = ["tanggal_sidang" => $date];
-        } elseif (!empty($id_dosen)) {
-            $conditions = ["dsn.id_dosen" => $id_dosen];
-        } elseif (!empty($nim)) {
-            $conditions = ["mhs.nim" => $nim];
-        }
-
-        $query = $this->db->table("t_u_$table")
-            ->select($fields)
-            ->join("t_status_sidang s_sidang", "s_sidang.id_status = t_u_$table.id_status_sidang")
-            ->join("t_status status", "s_sidang.id_status = status.id_status")
-            ->join("t_sidang sidang", "s_sidang.id_sidang = sidang.id_sidang")
-            ->join("t_mahasiswa mhs", "status.nim = mhs.nim")
-            ->join("t_jurusan jur", "mhs.kode_jurusan = jur.kode_jur")
-            ->join("t_dosen dsn", "status.id_dosen = dsn.id_dosen")
-            ->join("t_kelompok_sidang kelompok", "sidang.id_kelompok_sidang = kelompok.id_kelompok_sidang")
-            ->join("t_ruangan ruangan", "sidang.id_ruangan = ruangan.id_ruang")
-            ->join("t_tanggal_sidang jadwal", "sidang.id_tanggal_sidang = jadwal.id_tanggal_sidang")
-            ->join("t_nilai nilai", "s_sidang.id_status = nilai.id_status", "left")
-            ->where($conditions)
-            ->orderBy('sidang_date', 'DESC');
-
-        $query = $query
-            ->get()->getResultObject();
-
-        foreach ($query as $it) {
-            if (!empty($id_dosen)) {
-                $it->keterangan_sidang = $it->nilai != null ?  "Sidang sudah dinilai" : "Belum sidang";
-            } elseif (!empty($nim)) {
-                unset($it->id_status);
-            }
-
-            $it->sidang_date_fmtd = $this->tglIndonesia($it->sidang_date_fmtd, true);
-        }
-
-        return $query;
+        return $this->newKompre($nim, $id_dosen, $date);
     }
 
     public function getStatusDosenDiSidang($nim, $jenis_status)
@@ -299,135 +162,6 @@ class SidangModel extends Model
         else return false;
     }
 
-    public function inputNilai($status, $nilai)
-    {
-        if ($this->cekIDStatus($status)) {
-            $a = $this->db->table("t_nilai")
-                ->insert(
-                    [
-                        "id_status" => $status,
-                        "nilai"     => $nilai,
-                    ]
-                );
-
-            if ($a) {
-                return "ok";
-            } else {
-                return "400";
-            }
-        } else return "400";
-    }
-
-    public function editNilai($status, $nilai)
-    {
-        if ($this->cekIDStatus($status)) {
-            $a = $this->db->table("t_nilai")
-                ->where("id_status", $status)
-                ->update(
-                    [
-                        "nilai"     => $nilai,
-                    ]
-                );
-
-            if ($a) {
-                return "ok";
-            } else {
-                return "400";
-            }
-        } else return "400";
-    }
-
-    public function getRevisi($where)
-    {
-        $query = $this->db->table("t_revisi")
-            ->select("id_revisi, t_mahasiswa.nim, t_dosen.id_dosen, t_mahasiswa.nama_mhs, CONCAT(t_dosen.nama_dosen, ', ', IFNULL(t_dosen.gelar_depan, '')) as nama_dosen, t_jenis_status.nama_status, t_revisi.id_status, detail_revisi, tgl_revisi_input, tgl_revisi_deadline, status as status_revisi")
-            ->where($where)
-            ->join("t_status", "t_revisi.id_status = t_status.id_status")
-            ->join("t_dosen", "t_status.id_dosen = t_dosen.id_dosen")
-            ->join("t_mahasiswa", "t_status.nim = t_mahasiswa.nim")
-            ->join("t_jenis_status", "t_status.id_jenis_status = t_jenis_status.id_jenis_status")
-            ->get()->getResultObject();
-
-        foreach ($query as $item) {
-            $item->status_revisi = $item->status_revisi > 0 ? true : false;
-        }
-
-        return $query;
-    }
-
-    public function addRevisi($id_status, $detail_revisi, $deadline = "NULL", $status = false)
-    {
-        if ($this->cekIDStatus($id_status)) {
-            $result = $this->db->table("t_revisi")
-                ->insert([
-                    "id_status"             => $id_status,
-                    "detail_revisi"         => $detail_revisi,
-                    "tgl_revisi_deadline"   => $deadline,
-                    "status"                => $status ? 1 : 0
-                ]);
-
-            if ($result) {
-                return "ok";
-            } else {
-                return "400";
-            }
-        } else return "400";
-    }
-
-    public function editRevisi($id_revisi, $id_status, $detail_revisi, $deadline = "NULL")
-    {
-        if ($this->cekIDStatus($id_status)) {
-            $a = $this->db->table("t_revisi")
-                ->where("id_revisi", $id_revisi)
-                ->update(
-                    [
-                        "detail_revisi"         => $detail_revisi,
-                        "tgl_revisi_edit"       => date('m/d/Y h:i:s a', time()),
-                        "tgl_revisi_deadline"   => $deadline,
-                    ]
-                );
-
-            if ($a) {
-                return "ok";
-            } else {
-                return "400";
-            }
-        } else return "400";
-    }
-
-    public function deleteRevisi($id_revisi, $id_status)
-    {
-        if ($this->cekIDStatus($id_status)) {
-            $a = $this->db->table("t_revisi")
-                ->where("id_revisi", $id_revisi)
-                ->delete();
-
-            if ($a != false) {
-                return "ok";
-            } else {
-                return "400";
-            }
-        } else return "400";
-    }
-
-    public function markRevisi($id_revisi, $id_status, $status = false)
-    {
-        if ($this->cekIDStatus($id_status)) {
-            $a = $this->db->table("t_revisi")
-                ->where("id_revisi", $id_revisi)
-                ->update(
-                    [
-                        "status"                => $status ? 1 : 0
-                    ]
-                );
-
-            if ($a) {
-                return "ok";
-            } else {
-                return "400";
-            }
-        } else return "400";
-    }
 
     // FOR DASHBOARD
 
@@ -560,7 +294,7 @@ class SidangModel extends Model
 
     public function getRekapMunaqosah($date)
     {
-        $query = $this->getKompre("", "", $date);
+        $query = $this->getMunaqosah("", "", $date);
 
         foreach ($query as $key => $item) {
             $ada_nilai = true;
@@ -943,6 +677,635 @@ class SidangModel extends Model
                 ->delete();
         } catch (Exception $e) {
             return false;
+        }
+    }
+
+    //----
+
+    private function getStatusDosen($idStatus)
+    {
+        return $this->db->table("t_jenis_status")->where("id_jenis_status", $idStatus)
+            ->get()->getFirstRow();
+    }
+
+    private function updateWrapper($table, $nim, $type, $details)
+    {
+        $fields = [$type => json_encode($details->$type)];
+        return $this->db->table($table)->where("nim", $nim)->update($fields);
+    }
+
+    private function olahDataDosen($mahasiswa, $result, $dosenModel, $adaNilaiCallback, $nim = "", $idDosen = "")
+    {
+        foreach ($result as $key => $item) {
+            $dosen = $dosenModel->findDosen($item->id_dosen)->getFirstRow();
+            $status = $this->getStatusDosen($item->jenis_status);
+
+            $item->id_status    = $key;
+            $item->nama_dosen   = $dosen->user_name;
+            $item->nama_status   = $status->nama_status;
+
+            if ($item->nilai == null) $item->nilai = "Belum ada";
+
+            $item->mutu         = $this->_mutu($item->nilai);
+            $item->color        = $this->warna($item->nilai);
+
+            $revisi             = [];
+
+            if (!property_exists($item, "revisi")) {
+                $item->revisi = [];
+            } else {
+                foreach ($item->revisi as $keyRevisi => $valueRevisi) {
+                    $valueRevisi->id_revisi = $keyRevisi;
+                    $valueRevisi->nim = $mahasiswa->nim;
+                    $valueRevisi->id_dosen = $item->id_dosen;
+                    $valueRevisi->nama_dosen   = $dosen->user_name;
+                    $valueRevisi->nama_status   = $status->nama_status;
+
+                    if($valueRevisi->id_dosen == $idDosen) {
+                        $revisi[] = $valueRevisi;
+                    }
+                }
+            }
+
+            if($item->id_dosen == $idDosen) {
+                $mahasiswa->nilai = [
+                    "nilai"     => $item->nilai,
+                    "mutu"      => $this->_mutu($item->nilai),
+                    "color"     => $this->warna($item->nilai),
+                    "revisi"    => $revisi
+                ];
+            }
+
+
+            if (!is_numeric($item->nilai)) {
+                $adaNilaiCallback(false);
+            }
+        }
+
+        return $result;
+    }
+
+    private function olahResult($result, $dosenModel, $nilaiTotal, $nim = "", $idDosen = "")
+    {
+        if (empty($result)) return [];
+
+        foreach ($result as $eachMahasiswa) {
+            $ada_nilai = true;
+
+            $eachMahasiswa->sidang_date_fmtd = $this->tglIndonesia($eachMahasiswa->sidang_date, true);
+
+            $eachMahasiswa->penguji = $this->olahDataDosen(
+                $eachMahasiswa,
+                json_decode($eachMahasiswa->penguji),
+                $dosenModel,
+                function ($value) use (&$ada_nilai) {
+                    if ($ada_nilai) $ada_nilai = $value;
+                },$nim, $idDosen
+            );
+
+            if (property_exists($eachMahasiswa, "pembimbing")) {
+                $eachMahasiswa->pembimbing = $this->olahDataDosen(
+                    $eachMahasiswa,
+                    json_decode($eachMahasiswa->pembimbing),
+                    $dosenModel,
+                    function ($value) use (&$ada_nilai) {
+                        if ($ada_nilai) $ada_nilai = $value;
+                    }, $nim, $idDosen
+                );
+            }
+
+            if(empty($idDosen)) {
+                $nilaiFinal = $nilaiTotal($ada_nilai, $eachMahasiswa->penguji, property_exists($eachMahasiswa, "pembimbing") ? property_exists($eachMahasiswa, "pembimbing") : []);
+
+                $eachMahasiswa->nilai = [
+                    "nilai"     => $nilaiFinal,
+                    "mutu"      => $this->_mutu($nilaiFinal),
+                    "color"     => $this->warna($nilaiFinal)
+                ];
+            }
+        }
+
+        return array_values($result);
+    }
+
+    public function newUP($nim = "", $idDosen = "", $date = "")
+    {
+        $dosenModel = new DosenModel($this->db);
+
+        $result = $this->newSidangDetails("t_sidang_proposal", ["mhs.nim", "nama_mhs", "judul_proposal", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji"], $nim, $idDosen, $date);
+
+        $result = $this->olahResult($result, $dosenModel, function ($ada_nilai, $penguji, $pembimbing) {
+            return $ada_nilai ? ((.5 * $penguji[0]->nilai) + (.5 * $penguji[1]->nilai)) : "Belum ada";
+        }, $nim, $idDosen);
+
+        if(!empty($result)) {
+            return !empty($nim) ? $result[0] : $result;
+        } else return [];
+    }
+
+    public function newKompre($nim = "", $idDosen = "", $date = "")
+    {
+        $dosenModel = new DosenModel($this->db);
+        $presentase_kompre = .333333333; //must be precise!
+
+        $result = $this->newSidangDetails("t_sidang_kompre", ["mhs.nim", "nama_mhs", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji"], $nim, $idDosen, $date);
+
+        $result = $this->olahResult($result, $dosenModel, function ($ada_nilai, $penguji, $pembimbing) use (&$presentase_kompre) {
+            if ($ada_nilai) {
+                $nilai = ($presentase_kompre * $penguji[0]->nilai) + ($presentase_kompre * $penguji[1]->nilai) + ($presentase_kompre * $penguji[2]->nilai);
+
+                if ($nilai > 100) $nilai = 100;
+                return $nilai;
+            } else {
+                return "Belum ada";
+            }
+        }, $nim, $idDosen);
+
+
+       if(!empty($result)) {
+            return !empty($nim) ? $result[0] : $result;
+        } else return [];
+    }
+
+    public function newMunaqosah($nim = "", $idDosen = "", $date = "")
+    {
+        $dosenModel = new DosenModel($this->db);
+
+        $result = $this->newSidangDetails("t_sidang_munaqosah", ["mhs.nim", "nama_mhs", "judul_munaqosah", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji", "pembimbing"], $nim, $idDosen, $date);
+
+        $result = $this->olahResult($result, $dosenModel, function ($ada_nilai, $penguji, $pembimbing) {
+            return $ada_nilai ? (.3 * $item->penguji[0]->nilai) + (.3 * $item->penguji[1]->nilai) +  (.2 * $item->pembimbing[0]->nilai) + (.2 * $item->pembimbing[1]->nilai) : "Belum ada";
+        }, $nim, $idDosen);
+
+        if(!empty($result)) {
+            return !empty($nim) ? $result[0] : $result;
+        } else return [];
+    }
+
+    public function newSidangDetails($table, array $fields, $nim = "", $idDosen = "", $date = "")
+    {
+        $conditions = [];
+        $orCond     = "";
+
+        if (!empty($date)) {
+            $conditions = ["tanggal_sidang" => $date];
+        } elseif (!empty($nim)) {
+            $conditions = ["mhs.nim" => $nim];
+        } elseif (!empty($idDosen)) {
+            $conditions = "JSON_SEARCH(JSON_EXTRACT(penguji, \"$[*].id_dosen\"), 'one', \"$idDosen\") is not null";
+            if ($table == "t_sidang_munaqosah")
+                $orCond = "JSON_SEARCH(JSON_EXTRACT(pembimbing, \"$[*].id_dosen\"), 'one', \"$idDosen\") is not null";
+        }
+
+        $result = $this->db->table("$table")
+            ->select($fields)
+            ->where($conditions, NULL, TRUE);
+
+        if (!empty($orCond)) $result = $result->orWhere($orCond, NULL, TRUE);
+
+        $result = $result
+            ->join("t_mahasiswa mhs", "$table.nim = mhs.nim")
+            ->join("t_jurusan jur", "mhs.kode_jurusan = jur.kode_jur")
+            ->join("t_sidang sidang", "$table.id_sidang = sidang.id_sidang")
+            ->join("t_tanggal_sidang tanggal", "sidang.id_tanggal_sidang = tanggal.id_tanggal_sidang")
+            ->join("t_ruangan ruangan", "sidang.id_ruangan = ruangan.id_ruang")
+            ->join("t_kelompok_sidang kelompok", "sidang.id_kelompok_sidang = kelompok.id_kelompok_sidang")
+            ->orderBy("mhs.nim")
+            ->get()->getResultObject();
+
+        return $result;
+    }
+
+    public function newCekRevisi($table, $nim, $idDosen, $idRevisi = "")
+    {
+        //DONE!
+        $dataSidang = [];
+        $ketemu = false;
+
+        switch ($table) {
+            case "t_sidang_proposal":
+                $dataSidang = $this->newUP($nim, $idDosen);
+                break;
+            case "t_sidang_kompre":
+                $dataSidang = $this->newKompre($nim, $idDosen);
+                break;
+            case "t_sidang_munaqosah":
+                $dataSidang = $this->newMunaqosah($nim, $idDosen);
+                break;
+            default:
+                return [];
+        }
+
+        if(empty($dataSidang)) return [];
+        else $details = $dataSidang;
+
+        foreach ($details->penguji as $dosen) {
+            if ($dosen->id_dosen == $idDosen) {
+                if(!empty($idRevisi) || $idRevisi == 0) return $dosen->revisi[$idRevisi];
+                else return $dosen->revisi;
+            }
+        }
+
+        if (property_exists($details, "pembimbing") && !$ketemu) {
+            foreach ($details->pembimbing as $dosen) {
+                if ($dosen->id_dosen == $idDosen || $idRevisi == 0) {
+                    if(!empty($idRevisi)) return $dosen->revisi[$idRevisi];
+                    else return $dosen->revisi;
+                }
+            }
+        }
+    }
+
+    public function newAddRevisi($table, $nim, $idDosen, $detailRevisi, $deadineRevisi)
+    {
+        //DONE!
+        date_default_timezone_set('Asia/Jakarta');
+
+        $ketemu         = false;
+        $fields         = [];
+        $type           = "";
+        $select         = ["penguji", "mhs.nim"];
+
+        if ($table == "t_sidang_munaqosah") $select[] = "pembimbing";
+
+        $details = $this->newSidangDetails($table, $select, $nim, $idDosen);
+
+        if (!empty($details)) $details = $details[0];
+        else return false;
+
+        $details->penguji = json_decode($details->penguji);
+        if (property_exists($details, "pembimbing")) $details->pembimbing = json_decode($details->pembimbing);
+
+        $buatRevisi = function ($detailRevisi, $deadineRevisi)  {
+            $revisiItem = new stdClass();
+
+            $revisiItem->detail_revisi = $detailRevisi;
+            $revisiItem->tgl_revisi_input = date("Y-m-d H:i:s");
+            $revisiItem->tgl_revisi_deadline = $deadineRevisi;
+            $revisiItem->status_revisi = false;
+
+            return $revisiItem;
+        };
+
+        foreach ($details->penguji as $dosen) {
+            if ($dosen->id_dosen == $idDosen) {
+                $dosen->revisi[] = $buatRevisi($detailRevisi, $deadineRevisi);
+                $ketemu = true;
+                $type = "penguji";
+                break;
+            }
+        }
+
+        if (property_exists($details, "pembimbing") && !$ketemu) {
+            foreach ($details->pembimbing as $dosen) {
+                if ($dosen->id_dosen == $idDosen) {
+                    $dosen->revisi[] = $buatRevisi($detailRevisi, $deadineRevisi);
+                    $ketemu = true;
+                    $type = "pembimbing";
+                    break;
+                }
+            }
+        }
+
+        if (!empty($type)) {
+            return $this->updateWrapper($table, $nim, $type, $details);
+        } else return false;
+    }
+
+    public function newDeleteRevisi($table, $nim, $idRevisi, $idDosen)
+    {
+        //DONE!
+        date_default_timezone_set('Asia/Jakarta');
+
+        $ketemu         = false;
+        $fields         = [];
+        $type           = "";
+        $select         = ["penguji", "mhs.nim"];
+
+        if ($table == "t_sidang_munaqosah") $select[] = "pembimbing";
+
+        $details = $this->newSidangDetails($table, $select, $nim, $idDosen);
+
+        if (!empty($details)) $details = $details[0];
+        else return false;
+
+        $details->penguji = json_decode($details->penguji);
+        if (property_exists($details, "pembimbing")) $details->pembimbing = json_decode($details->pembimbing);
+
+        foreach ($details->penguji as $dosen) {
+            if ($dosen->id_dosen == $idDosen) {
+                unset($dosen->revisi[$idRevisi]);
+                $dosen->revisi = array_values($dosen->revisi);
+
+                $ketemu = true;
+                $type = "penguji";
+                break;
+            }
+        }
+
+        if (property_exists($details, "pembimbing") && !$ketemu) {
+            foreach ($details->pembimbing as $dosen) {
+                if ($dosen->id_dosen == $idDosen) {
+                    unset($dosen->revisi[$idRevisi]);
+                    $dosen->revisi = array_values($dosen->revisi);
+
+                    $ketemu = true;
+                    $type = "pembimbing";
+                    break;
+                }
+            }
+        }
+
+        if (!empty($type)) {
+            return $this->updateWrapper($table, $nim, $type, $details);
+        } else return false;
+    }
+
+    public function newEditRevisi($table, $nim, $idRevisi, $idDosen, $detailRevisi, $deadineRevisi, $booleanStatus = false)
+    {
+        //DONE
+        date_default_timezone_set('Asia/Jakarta');
+
+        $ketemu         = false;
+        $fields         = [];
+        $type           = "";
+        $select         = ["penguji", "mhs.nim"];
+
+        if ($table == "t_sidang_munaqosah") $select[] = "pembimbing";
+
+        $details = $this->newSidangDetails($table, $select, $nim, $idDosen);
+
+        if (!empty($details)) $details = $details[0];
+        else return false;
+
+        $details->penguji = json_decode($details->penguji);
+        if (property_exists($details, "pembimbing")) $details->pembimbing = json_decode($details->pembimbing);
+
+        $editRevisi = function ($revisiItem, $detailRevisi, $deadineRevisi, $booleanStatus) {
+            $revisiItem->detail_revisi = $detailRevisi;
+            $revisiItem->tgl_revisi_deadline = $deadineRevisi;
+            $revisiItem->status_revisi = $booleanStatus;
+
+            return $revisiItem;
+        };
+
+        foreach ($details->penguji as $dosen) {
+            if ($dosen->id_dosen == $idDosen) {
+                $dosen->revisi[$idRevisi] = $editRevisi($dosen->revisi[$idRevisi], $detailRevisi, $deadineRevisi, $booleanStatus);
+                $ketemu = true;
+                $type = "penguji";
+                break;
+            }
+        }
+
+        if (property_exists($details, "pembimbing") && !$ketemu) {
+            foreach ($details->pembimbing as $dosen) {
+                if ($dosen->id_dosen == $idDosen) {
+                $dosen->revisi[$idRevisi] = $editRevisi($dosen->revisi[$idRevisi], $detailRevisi, $deadineRevisi, $booleanStatus);
+                    $ketemu = true;
+                    $type = "pembimbing";
+                    break;
+                }
+            }
+        }
+
+        if (!empty($type)) {
+            return $this->updateWrapper($table, $nim, $type, $details);
+        } else return false;
+    }
+
+    public function newSetRevisiStatus($table, $nim, $idRevisi, $idDosen, $booleanStatus)
+    {
+        //DONE
+        date_default_timezone_set('Asia/Jakarta');
+
+        $ketemu         = false;
+        $fields         = [];
+        $type           = "";
+        $select         = ["penguji", "mhs.nim"];
+
+        if ($table == "t_sidang_munaqosah") $select[] = "pembimbing";
+
+        $details = $this->newSidangDetails($table, $select, $nim, $idDosen);
+
+        if (!empty($details)) $details = $details[0];
+        else return false;
+
+        $details->penguji = json_decode($details->penguji);
+        if (property_exists($details, "pembimbing")) $details->pembimbing = json_decode($details->pembimbing);
+
+        $editRevisi = function ($revisiItem, $booleanStatus) {
+            $revisiItem->status_revisi = $booleanStatus=="true" ? true : false;
+
+            return $revisiItem;
+        };
+
+        foreach ($details->penguji as $dosen) {
+            if ($dosen->id_dosen == $idDosen) {
+                $dosen->revisi[$idRevisi] = $editRevisi($dosen->revisi[$idRevisi], $booleanStatus);
+                $ketemu = true;
+                $type = "penguji";
+                break;
+            }
+        }
+
+        if (property_exists($details, "pembimbing") && !$ketemu) {
+            foreach ($details->pembimbing as $dosen) {
+                if ($dosen->id_dosen == $idDosen) {
+                    $dosen->revisi[] = $editRevisi($dosen->revisi[$idRevisi], $booleanStatus);
+                    $ketemu = true;
+                    $type = "pembimbing";
+                    break;
+                }
+            }
+        }
+
+        if (!empty($type)) {
+            return $this->updateWrapper($table, $nim, $type, $details);
+        } else return false;
+    }
+
+    public function newEditNilai($table, $nim, $idDosen, $nilai)
+    {
+        //DONE
+        date_default_timezone_set('Asia/Jakarta');
+
+        $ketemu         = false;
+        $fields         = [];
+        $type           = "";
+        $select         = ["penguji", "mhs.nim"];
+
+        if ($table == "t_sidang_munaqosah") $select[] = "pembimbing";
+
+        $details = $this->newSidangDetails($table, $select, $nim, $idDosen);
+
+        if (!empty($details)) $details = $details[0];
+        else return false;
+
+        $details->penguji = json_decode($details->penguji);
+        if (property_exists($details, "pembimbing")) $details->pembimbing = json_decode($details->pembimbing);
+
+        foreach ($details->penguji as $dosen) {
+            if ($dosen->id_dosen == $idDosen) {
+                $dosen->nilai = $nilai;
+                $ketemu = true;
+                $type = "penguji";
+                break;
+            }
+        }
+
+        if (property_exists($details, "pembimbing") && !$ketemu) {
+            foreach ($details->pembimbing as $dosen) {
+                if ($dosen->id_dosen == $idDosen) {
+                    $dosen->nilai = $nilai;
+                    $ketemu = true;
+                    $type = "pembimbing";
+                    break;
+                }
+            }
+        }
+
+        if (!empty($type)) {
+            return $this->updateWrapper($table, $nim, $type, $details);
+        } else return false;
+    }
+
+    public function newAddMahasiswaSidang($nim, $table, $idSidang, $judul = "", $penguji = [], $pembimbing = [])
+    {
+        //DONE!
+        $dosenModel = new DosenModel($this->db);
+        $authModel  = new \App\Models\AuthModel($this->db);
+
+        $lengkap = true;
+
+        foreach ($penguji as $eachPenguji) {
+            $detailDosen = $dosenModel->findDosen($eachPenguji);
+
+            if (empty($detailDosen)) {
+                if ($lengkap) $lengkap = false;
+            }
+        }
+
+        if ($lengkap) {
+            foreach ($pembimbing as $eachPembimbing) {
+                $detailDosen = $dosenModel->findDosen($eachPembimbing);
+
+                if (empty($detailDosen)) {
+                    if ($lengkap) $lengkap = false;
+                }
+            }
+        }
+
+        if (!$lengkap) return false;
+
+        $cekUser = $authModel->getUser($nim);
+
+        if (empty($cekUser)) {
+            $result = $authModel->createUserMahasiswa($nim);
+        }
+
+        $pengujiJSON = [];
+        $pembimbingJSON = [];
+        $idStatusPenguji = [];
+        $idStatusPembimbing = [];
+        $judulFieldName = "";
+
+        switch ($table) {
+            case "t_sidang_proposal":
+                $idStatusPenguji = [6, 7];
+                $judulFieldName = "judul_proposal";
+                break;
+            case "t_sidang_kompre":
+                $idStatusPenguji = [8, 9, 10];
+                break;
+            case "t_sidang_munaqosah":
+                $idStatusPenguji = [11, 12];
+                $idStatusPembimbing = [3, 4];
+                $judulFieldName = "judul_munaqosah";
+                break;
+            default:
+                return false;
+        }
+
+        foreach ($penguji as $index => $eachPenguji) {
+            $detailDosen = new stdClass();
+
+            $detailDosen->nilai = null;
+            $detailDosen->revisi = [];
+            $detailDosen->id_dosen = $eachPenguji;
+            $detailDosen->jenis_status = $idStatusPenguji[$index];
+
+            $pengujiJSON[] = $detailDosen;
+        }
+
+        if (!empty($pembimbing)) {
+            foreach ($pembimbing as $index => $eachPembimbing) {
+                $detailDosen = new stdClass();
+
+                $detailDosen->nilai = null;
+                $detailDosen->revisi = [];
+                $detailDosen->id_dosen = $eachPembimbing;
+                $detailDosen->jenis_status = $idStatusPembimbing[$index];
+
+                $pembimbingJSON[] = $detailDosen;
+            }
+        }
+
+        $fields = [
+            "nim" => $nim,
+            "id_sidang" => $idSidang
+        ];
+
+        if (!empty($judulFieldName)) {
+            $fields = array_merge($fields, [$judulFieldName => $judul]);
+        }
+
+        if (!empty($penguji)) {
+            $fields = array_merge($fields, ["penguji" => json_encode($pengujiJSON)]);
+        }
+
+        if (!empty($pembimbing)) {
+            $fields = array_merge($fields, ["pembimbing" => json_encode($pembimbingJSON)]);
+        }
+
+        return $this->db->table($table)->insert($fields);
+    }
+
+    public function newCekNilai($table, $nim, $idDosen)
+    {
+        //DONE!
+        $dataSidang = [];
+        $ketemu = false;
+
+        switch ($table) {
+            case "t_sidang_proposal":
+                $dataSidang = $this->newUP($nim, $idDosen);
+                break;
+            case "t_sidang_kompre":
+                $dataSidang = $this->newKompre($nim, $idDosen);
+                break;
+            case "t_sidang_munaqosah":
+                $dataSidang = $this->newMunaqosah($nim, $idDosen);
+                break;
+            default:
+                return [];
+        }
+
+        if (!empty($dataSidang)) $details = $dataSidang;
+        else return false;
+
+        foreach ($details->penguji as $dosen) {
+            if ($dosen->id_dosen == $idDosen) {
+                return [$dosen];
+            }
+        }
+
+        if (property_exists($details, "pembimbing") && !$ketemu) {
+            foreach ($details->pembimbing as $dosen) {
+                if ($dosen->id_dosen == $idDosen) {
+                    return [$dosen];
+                }
+            }
         }
     }
 }
