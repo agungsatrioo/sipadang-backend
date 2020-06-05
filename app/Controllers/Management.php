@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\AuthModel;
 use App\Models\DosenModel;
+use App\Models\MahasiswaModel;
 use Exception;
 
 class Management extends BaseController
@@ -1361,5 +1362,14 @@ class Management extends BaseController
 
     public function mhs()
     {
+        $mhsModel = new MahasiswaModel($this->db);
+
+        $r = $this->db->table("t_mahasiswa")->get()->getResultObject();
+
+        echo "INSERT INTO `t_mahasiswa_new`(`mhs_id`, `nim`, `nama`, `jur_kode`, `id_jns_daftar`, `id_jalur_masuk`, `id_agama`, `id_jns_keluar`, `mulai_smt`, `id_user`, `tgl_masuk_sp`, `jk`, `nisn`, `nik`, `tmpt_lahir`, `tgl_lahir`, `jln`, `rt`, `rw`, `nm_dsn`, `ds_kel`, `kode_pos`, `telepon_rumah`, `telepon_seluler`, `email`, `a_terima_kps`, `no_kps`, `stat_pd`, `nm_ayah`, `nik_ayah`, `tgl_lahir_ayah`, `id_jenjang_pendidikan_ayah`, `id_pekerjaan_ayah`, `id_penghasilan_ayah`, `nm_ibu_kandung`, `nik_ibu_kandung`, `tgl_lahir_ibu`, `id_jenjang_pendidikan_ibu`, `id_pekerjaan_ibu`, `id_penghasilan_ibu`, `nm_wali`, `tgl_lahir_wali`, `id_jenjang_pendidikan_wali`, `id_pekerjaan_wali`, `id_penghasilan_wali`, `id_jns_tinggal`, `kur_id`, `dosen_pemb`, `id_pembiayaan`, `kewarganegaraan`, `npwp`, `id_wil`, `id_alat_transport`, `kelas`, `pesan`, `sks_diakui`, `kode_pt_asal`, `kode_prodi_asal`) VALUES <br>";
+
+       foreach($r as $a) {
+        echo "(NULL, $a->nim, $a->nama_mhs, $a->kode_jurusan),<br>";
+       }
     }
 }
