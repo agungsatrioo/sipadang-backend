@@ -5,11 +5,11 @@ namespace App\Controllers;
 use App\Models\AuthModel;
 use App\Models\DosenModel;
 use App\Models\MahasiswaModel;
+use CodeIgniter\Database\Exceptions\DatabaseException;
 use Exception;
 
 class Management extends BaseController
 {
-
     private function _createMenu()
     {
         $result = "";
@@ -23,10 +23,15 @@ class Management extends BaseController
             ["type" => "item", "Tanggal Sidang", base_url("management/tanggal"), "fa-tasks"],
             ["type" => "item", "Ruangan Sidang", base_url("management/ruangan"), "fa-building"],
             ["type" => "hr"],
+            ["type" => "header", "Akademik"],
+            ["type" => "item", "Daftar Mahasiswa", base_url("management/mahasiswa"), "fa-user"],
+            ["type" => "item", "Daftar Dosen", base_url("management/dosen"), "fa-user-graduate"],
+            ["type" => "hr"],
             ["type" => "header", "Cetak"],
             ["type" => "item", "Cetak Rekapitulasi", base_url("management/cetak"), "fa-print"],
             ["type" => "hr"],
             ["type" => "header", "Autentikasi"],
+            ["type" => "item", "Daftar Pengguna", base_url("management/users"), "fa-users"],
             ["type" => "item", "Reset Kata Sandi", base_url("management/reset_password"), "fa-key"],
         ];
 
@@ -88,6 +93,7 @@ class Management extends BaseController
 
             if (!empty($listMhs)) {
                 $detailSidang = [];
+
                 switch ($sidangType) {
                     case "proposal":
                         try {
@@ -193,7 +199,7 @@ class Management extends BaseController
                         $judul = $request->getPost("judul");
 
                         if (empty($judul)) {
-                            session()->setFlashdata("error", "Tiap penguji/pembimbing harus satu orang yang berbeda.");
+                            session()->setFlashdata("error", "Judul jangan dikosongkan.");
                         } elseif (has_dupes($penguji) && has_dupes($pembimbing)) {
                             session()->setFlashdata("error", "Data penguji jangan duplikat.");
                         } elseif (!empty($penguji[0]) && !empty($penguji[1]) && !empty($pembimbing[0])  && !empty($pembimbing[1])) {
@@ -519,7 +525,6 @@ class Management extends BaseController
         return redirect("management/jadwal");
     }
 
-
     public function tanggal_delete($id)
     {
         $sidangModel = new \App\Models\SidangModel($this->db);
@@ -535,12 +540,11 @@ class Management extends BaseController
         return redirect("management/tanggal");
     }
 
-
     public function ruangan_delete($id)
     {
         $sidangModel = new \App\Models\SidangModel($this->db);
 
-        $result = $sidangModel->deleteJadwalSidang($id);
+        $result = $sidangModel->deleteRuangSidang($id);
 
         if ($result) {
             session()->setFlashdata("success", "Berhasil menghapus ruangan.");
@@ -581,12 +585,13 @@ class Management extends BaseController
                     session()->setFlashdata("error", "Gagal mengedit ruangan.");
                 }
             }
-
-            $data['error'] = session()->getFlashdata("error");
-            $data['success'] = session()->getFlashdata("success");
         }
 
         $data['ruang_list'] = $sidangModel->showRuanganSidang();
+
+
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
 
         if (empty($data['ruang_list'])) {
             $data['error'] = "Tidak ada data ruangan.";
@@ -602,11 +607,11 @@ class Management extends BaseController
         $sidangModel = new \App\Models\SidangModel($this->db);
 
         if (!empty($id)) {
-            $data['header'] = "Edit Tanggal";
-            $data['title'] = "Management - Edit Tanggal Sidang";
+            $data['header'] = "Edit Ruangan";
+            $data['title'] = "Management - Edit Ruangan";
         } else {
-            $data['title'] = "Management - Tambah Tanggal Sidang";
-            $data['header'] = "Tambah Tanggal";
+            $data['title'] = "Management - Tambah Ruangan";
+            $data['header'] = "Tambah Ruangan";
         }
 
         $data['action_url'] = base_url("management/ruangan");
@@ -824,7 +829,7 @@ class Management extends BaseController
                         $currPage .= "
                     <tr>
                         <td class='text-center'>$i</td>
-                        <td>{$anggota->nama_mhs}</td>
+                        <td>{$anggota->nama}</td>
                         <td class='text-center'>{$anggota->nim}</td>
                         <td class='text-center'>{$anggota->nama_jur}</td>
                         <td class='text-center'>{$anggota->penguji[0]->nilai}</td>
@@ -1024,7 +1029,7 @@ class Management extends BaseController
                         $currPage .= "
                     <tr>
                         <td class='text-center'>$i</td>
-                        <td>{$anggota->nama_mhs}</td>
+                        <td>{$anggota->nama}</td>
                         <td class='text-center'>{$anggota->nim}</td>
                         <td class='text-center'>{$anggota->nama_jur}</td>
                         <td class='text-center'>{$anggota->penguji[0]->nilai}</td>
@@ -1244,7 +1249,7 @@ class Management extends BaseController
                         $currPage .= "
                     <tr>
                         <td class='text-center'>$i</td>
-                        <td>{$anggota->nama_mhs}</td>
+                        <td>{$anggota->nama}</td>
                         <td class='text-center'>{$anggota->nim}</td>
                         <td class='text-center'>{$anggota->nama_jur}</td>
                         <td class='text-center'>{$anggota->pembimbing[0]->nilai}</td>
@@ -1327,13 +1332,13 @@ class Management extends BaseController
 
         $request = $this->request;
 
-        if(!empty($request->getPost("act"))) {
+        if (!empty($request->getPost("act"))) {
             $authModel = new AuthModel($this->db);
             $id = $request->getPost("identity");
 
             $cekUser = $authModel->getUser($id);
 
-            if(empty($cekUser)) session()->setFlashdata("error", "Identitas yang dimasukkan tidak ada.");
+            if (empty($cekUser)) session()->setFlashdata("error", "Identitas yang dimasukkan tidak ada.");
 
             $result = $authModel->resetLupaPassword($id);
 
@@ -1359,17 +1364,211 @@ class Management extends BaseController
         return redirect("management");
     }
 
+    public function list_mhs()
+    {
+        //DONE
+        $mahasiswaModel = new \App\Models\MahasiswaModel($this->db);
 
-    public function mhs()
+        $request = $this->request;
+
+        $data['title'] = "Management - Daftar Mahasiswa";
+
+        if (!empty($request->getPost("add"))) {
+            $formData   = $request->getPost();
+            $idMhs      = $request->getPost("mhs_id");
+
+            unset($formData["add"]);
+
+            try {
+                if (!empty($idMhs)) {
+                    unset($formData["mhs_id"]);
+
+                    $result = $mahasiswaModel->ubahMhs($idMhs, $formData);
+
+                    if ($result)
+                        session()->setFlashdata("success", "Berhasil mengedit mahasiswa.");
+                    else throw new DatabaseException();
+                } else {
+                    $result = $mahasiswaModel->addMhs($formData);
+
+                    if ($result)
+                        session()->setFlashdata("success", "Berhasil menambahkan mahasiswa.");
+                    else throw new DatabaseException();
+                }
+            } catch (\Throwable $th) {
+                session()->setFlashdata("error", "Gagal mengedit/menambahkan mahasiswa.");
+            }
+        }
+
+        $data['mhsList'] = $mahasiswaModel->findMahasiswa()->getResultObject();
+
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
+
+        if (empty($data['mhsList'])) {
+            $data['error'] = "Tidak ada data mahasiswa.";
+        }
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardMahasiswaListView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function mhs_form($nim = "")
+    {
+        $mahasiswaModel = new \App\Models\MahasiswaModel($this->db);
+        $jurusanModel = new \App\Models\JurusanModel($this->db);
+
+        if (!empty($nim)) {
+            $data['header'] = "Edit Mahasiswa";
+            $data['title'] = "Management - Edit Mahasiswa";
+        } else {
+            $data['title'] = "Management - Tambah Mahasiswa";
+            $data['header'] = "Tambah Mahasiswa";
+        }
+
+        $data['action_url'] = base_url("management/mahasiswa");
+
+        if (!empty($nim)) {
+            $mahasiswa = $mahasiswaModel->findMahasiswa($nim)->getFirstRow();
+
+            $data['mhs'] = $mahasiswa;
+            $data['input_hidden_mhs_id'] = "<input type='hidden' name='mhs_id' value='$mahasiswa->mhs_id'>";
+        }
+
+        $data['option_jurusan'] = $jurusanModel->getJurusan()->getResultObject();
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardMahasiswaFormView.php", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function mhs_delete($id)
+    {
+        $mahasiswaModel = new \App\Models\MahasiswaModel($this->db);
+
+        try {
+            $result = $mahasiswaModel->deleteMhs($id);
+
+            if ($result)
+                session()->setFlashdata("success", "Berhasil menghapus mahasiswa.");
+            else throw new DatabaseException();
+        } catch (\Throwable $th) {
+            session()->setFlashdata("error", "Gagal menghapus mahasiswa.");
+        }
+
+        return redirect("management/mahasiswa");
+    }
+
+    public function list_dosen()
+    {
+        //DONE
+        $dosenModel = new \App\Models\DosenModel($this->db);
+
+        $request = $this->request;
+
+        $data['title'] = "Management - Daftar Dosen";
+
+        if (!empty($request->getPost("add"))) {
+            $formData   = $request->getPost();
+            $idDosen      = $request->getPost("id_dosen");
+
+            unset($formData["add"]);
+
+            try {
+                if (!empty($idDosen)) {
+                    unset($formData["id_dosen"]);
+
+                    $result = $dosenModel->ubahDosen($idDosen, $formData);
+
+                    if ($result)
+                        session()->setFlashdata("success", "Berhasil mengedit dosen.");
+                    else throw new DatabaseException();
+                } else {
+                    $result = $dosenModel->addDosen($formData);
+
+                    if ($result)
+                        session()->setFlashdata("success", "Berhasil menambahkan dosen.");
+                    else throw new DatabaseException();
+                }
+            } catch (\Throwable $th) {
+                session()->setFlashdata("error", "Gagal mengedit/menambahkan dosen. Alasan: $th");
+                
+            }
+        }
+
+        $data['dosenList'] = $dosenModel->findDosen()->getResultObject();
+
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
+
+        if (empty($data['dosenList'])) {
+            $data['error'] = "Tidak ada data dosen.";
+        }
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardDosenListView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function dosen_form($idDosen = "")
+    {
+        $dosenModel = new \App\Models\DosenModel($this->db);
+        $jurusanModel = new \App\Models\JurusanModel($this->db);
+
+        if (!empty($idDosen)) {
+            $data['header'] = "Edit Dosen";
+            $data['title'] = "Management - Edit Dosen";
+        } else {
+            $data['title'] = "Management - Tambah Dosen";
+            $data['header'] = "Tambah Dosen";
+        }
+
+        $data['action_url'] = base_url("management/dosen");
+
+        if (!empty($idDosen)) {
+            $dosen = $dosenModel->findDosenByKeyword($idDosen)->getFirstRow();
+
+            $data['dosen'] = $dosen;
+            $data['input_hidden_dosen_id'] = "<input type='hidden' name='id_dosen' value='$dosen->id_dosen'>";
+        }
+
+        $data['option_jurusan'] = $jurusanModel->getJurusan()->getResultObject();
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardDosenFormView.php", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function dosen_delete($id)
+    {
+        $dosenModel = new \App\Models\DosenModel($this->db);
+
+        try {
+            $result = $dosenModel->deleteDosen($id);
+
+            if ($result)
+                session()->setFlashdata("success", "Berhasil menghapus dosen.");
+            else throw new DatabaseException();
+        } catch (\Throwable $th) {
+            session()->setFlashdata("error", "Gagal menghapus dosen.");
+        }
+
+        return redirect("management/dosen");
+    }
+
+    private function getho()
     {
         $mhsModel = new MahasiswaModel($this->db);
 
-        $r = $this->db->table("t_mahasiswa")->get()->getResultObject();
+        $r = $this->db->table("t_mahasiswa_old")->get()->getResultObject();
 
-        echo "INSERT INTO `t_mahasiswa_new`(`mhs_id`, `nim`, `nama`, `jur_kode`, `id_jns_daftar`, `id_jalur_masuk`, `id_agama`, `id_jns_keluar`, `mulai_smt`, `id_user`, `tgl_masuk_sp`, `jk`, `nisn`, `nik`, `tmpt_lahir`, `tgl_lahir`, `jln`, `rt`, `rw`, `nm_dsn`, `ds_kel`, `kode_pos`, `telepon_rumah`, `telepon_seluler`, `email`, `a_terima_kps`, `no_kps`, `stat_pd`, `nm_ayah`, `nik_ayah`, `tgl_lahir_ayah`, `id_jenjang_pendidikan_ayah`, `id_pekerjaan_ayah`, `id_penghasilan_ayah`, `nm_ibu_kandung`, `nik_ibu_kandung`, `tgl_lahir_ibu`, `id_jenjang_pendidikan_ibu`, `id_pekerjaan_ibu`, `id_penghasilan_ibu`, `nm_wali`, `tgl_lahir_wali`, `id_jenjang_pendidikan_wali`, `id_pekerjaan_wali`, `id_penghasilan_wali`, `id_jns_tinggal`, `kur_id`, `dosen_pemb`, `id_pembiayaan`, `kewarganegaraan`, `npwp`, `id_wil`, `id_alat_transport`, `kelas`, `pesan`, `sks_diakui`, `kode_pt_asal`, `kode_prodi_asal`) VALUES <br>";
+        echo "INSERT INTO `t_mahasiswa` (`mhs_id`, `nim`, `nama`, `jur_kode`, `id_jns_daftar`, `id_jalur_masuk`, `id_agama`, `id_jns_keluar`, `mulai_smt`, `id_user`, `tgl_masuk_sp`, `jk`, `nisn`, `nik`, `tmpt_lahir`, `tgl_lahir`, `jln`, `rt`, `rw`, `nm_dsn`, `ds_kel`, `kode_pos`, `telepon_rumah`, `telepon_seluler`, `email`, `a_terima_kps`, `no_kps`, `stat_pd`, `nm_ayah`, `nik_ayah`, `tgl_lahir_ayah`, `id_jenjang_pendidikan_ayah`, `id_pekerjaan_ayah`, `id_penghasilan_ayah`, `nm_ibu_kandung`, `nik_ibu_kandung`, `tgl_lahir_ibu`, `id_jenjang_pendidikan_ibu`, `id_pekerjaan_ibu`, `id_penghasilan_ibu`, `nm_wali`, `tgl_lahir_wali`, `id_jenjang_pendidikan_wali`, `id_pekerjaan_wali`, `id_penghasilan_wali`, `id_jns_tinggal`, `kur_id`, `dosen_pemb`, `id_pembiayaan`, `kewarganegaraan`, `npwp`, `id_wil`, `id_alat_transport`, `kelas`, `pesan`, `sks_diakui`, `kode_pt_asal`, `kode_prodi_asal`) VALUES <br>";
 
-       foreach($r as $a) {
-        echo "(NULL, $a->nim, $a->nama_mhs, $a->kode_jurusan),<br>";
-       }
+        foreach ($r as $a) {
+            $jk = $a->jk == "P" ? "L" : "P";
+
+            echo "(NULL, $a->nim, \"$a->nama_mhs\", '$a->kode_jurusan', '1', '5', '1', NULL, '20171', NULL, NULL, '$jk', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'A', NULL, NULL, NULL, NULL, NULL, '16', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '020000', NULL, NULL, NULL, NULL, NULL, NULL),<br>";
+        }
     }
 }

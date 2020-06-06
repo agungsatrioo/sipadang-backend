@@ -85,11 +85,11 @@
                                                 <div class="col-lg-10">
                                                     <?= $item->judul_munaqosah ?>
                                                 </div>
-                                                <!--
+                                                
                                             <div class="col-lg-2">
                                             <a href="<?= base_url("management/judul_munaqosah/{$item->nim}/edit") ?>" class="btn btn-link">Edit</a>
                                             </div>
-                                            -->
+                                            
                                             </div>
                                         </div>
                                     </div>

@@ -2,51 +2,50 @@
 
 namespace App\Models;
 
+use CodeIgniter\Database\ResultInterface;
 use CodeIgniter\Model;
 
 class MahasiswaModel extends Model
 {
-    public function findMahasiswa($nim = null)
-	{
-		$where = $nim != null ? ["nim" => $nim] : [];
 
+	private function findMhsBuilder() {
 		return $this->db->table("t_mahasiswa mhs")
-			->select([
-				"nim as user_identity",
-				"nama_mhs as user_name",
-				"jk",
-				"tanggal_lahir",
-				"tanggal_masuk",
-				"nama_jur"
-			])
-			->join("t_jurusan", "t_jurusan.kode_jur = mhs.kode_jurusan")
-			->where($where)
-			->get();
+		->select([
+			"mhs_id",
+			"nim as user_identity",
+			"nama as user_name",
+			"nim",
+			"nama",
+			"jk",
+			"jur_kode",
+			"nama_jur"
+		])
+		->join("t_jurusan", "t_jurusan.kode_jur = mhs.jur_kode");
+	}
+    public function findMahasiswa($keyword = ""): ResultInterface
+	{
+		$builder = $this->findMhsBuilder();
+
+		if(!empty($keyword)) 
+		$builder = $builder->where("nim", $keyword)
+		->orWhere("mhs_id", $keyword);
+
+		return $builder->get();
 	}
 
 	public function findMahasiswaByKeyword($keyword) {
-		return $this->db->table("t_mahasiswa mhs")
-			->select([
-				"nim",
-				"nama_mhs",
-				"jk",
-				"tanggal_lahir",
-				"tanggal_masuk",
-				"nama_jur"
-			])
-			->join("t_jurusan", "t_jurusan.kode_jur = mhs.kode_jurusan")
-			->where("nim", $keyword)
-			->orLike("nama_mhs", $keyword)
-			->get()->getResultObject();
+		return $this->findMhsBuilder()
+		->like("nama", $keyword)
+		->get()->getResultObject();
 	}
 
 	public function populateMhs($wildCard) {
 		$query =  $this->db->table("t_mahasiswa mhs")
 			->select([
 				"nim",
-				"nama_mhs"
+				"nama"
 			])
-			->join("t_jurusan", "t_jurusan.kode_jur = mhs.kode_jurusan")
+			->join("t_jurusan", "t_jurusan.kode_jur = mhs.jur_kode")
 			->like("nim", $wildCard)
 			->get()->getResultObject();
 
@@ -57,5 +56,32 @@ class MahasiswaModel extends Model
 		}
 
 		return $result;
+	}
+
+	public function nimToId($nim) {
+		$result = $this->db->table("t_mahasiswa mhs")
+		->where("nim", "$nim")
+		->get()->getFirstRow();
+
+		return $result->id_mhs;
+	}
+
+	public function ubahMhs($keyword, $data) {
+		return $this->db->table("t_mahasiswa")
+		->where("nim", $keyword)
+		->orWhere("mhs_id", $keyword)
+		->update($data);
+	}	
+	
+	public function deleteMhs($keyword) {
+		return $this->db->table("t_mahasiswa")
+		->where("nim", $keyword)
+		->orWhere("mhs_id", $keyword)
+		->delete();
+	}
+	
+	public function addMhs($data) {
+		return $this->db->table("t_mahasiswa")
+		->insert($data);
 	}
 }

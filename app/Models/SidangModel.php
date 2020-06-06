@@ -463,7 +463,7 @@ class SidangModel extends Model
     {
         $dosenModel = new DosenModel($this->db);
 
-        $result = $this->newSidangDetails("t_sidang_proposal", ["mhs.nim", "nama_mhs", "judul_proposal", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji"], $nim, $idDosen, $date);
+        $result = $this->newSidangDetails("t_sidang_proposal", ["mhs.nim", "nama", "judul_proposal", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji"], $nim, $idDosen, $date);
 
         $result = $this->olahResult($result, $dosenModel, function ($ada_nilai, $penguji, $pembimbing) {
             return $ada_nilai ? ((.5 * $penguji[0]->nilai) + (.5 * $penguji[1]->nilai)) : "Belum ada";
@@ -479,7 +479,7 @@ class SidangModel extends Model
         $dosenModel = new DosenModel($this->db);
         $presentase_kompre = .333333333; //must be precise!
 
-        $result = $this->newSidangDetails("t_sidang_kompre", ["mhs.nim", "nama_mhs", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji"], $nim, $idDosen, $date);
+        $result = $this->newSidangDetails("t_sidang_kompre", ["mhs.nim", "nama", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji"], $nim, $idDosen, $date);
 
         $result = $this->olahResult($result, $dosenModel, function ($ada_nilai, $penguji, $pembimbing) use (&$presentase_kompre) {
             if ($ada_nilai) {
@@ -502,7 +502,7 @@ class SidangModel extends Model
     {
         $dosenModel = new DosenModel($this->db);
 
-        $result = $this->newSidangDetails("t_sidang_munaqosah", ["mhs.nim", "nama_mhs", "judul_munaqosah", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji", "pembimbing"], $nim, $idDosen, $date);
+        $result = $this->newSidangDetails("t_sidang_munaqosah", ["mhs.nim", "nama", "judul_munaqosah", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji", "pembimbing"], $nim, $idDosen, $date);
 
         $result = $this->olahResult($result, $dosenModel, function ($ada_nilai, $penguji, $pembimbing) {
             return $ada_nilai ? (.3 * $penguji[0]->nilai) + (.3 * $penguji[1]->nilai) +  (.2 * $pembimbing[0]->nilai) + (.2 * $pembimbing[1]->nilai) : "Belum ada";
@@ -536,7 +536,7 @@ class SidangModel extends Model
 
         $result = $result
             ->join("t_mahasiswa mhs", "$table.nim = mhs.nim")
-            ->join("t_jurusan jur", "mhs.kode_jurusan = jur.kode_jur")
+            ->join("t_jurusan jur", "mhs.jur_kode = jur.kode_jur")
             ->join("t_sidang sidang", "$table.id_sidang = sidang.id_sidang")
             ->join("t_tanggal_sidang tanggal", "sidang.id_tanggal_sidang = tanggal.id_tanggal_sidang")
             ->join("t_ruangan ruangan", "sidang.id_ruangan = ruangan.id_ruang")

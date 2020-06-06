@@ -85,6 +85,27 @@ $routes->group('management', function($routes){
 		$routes->add('(:num)/delete', 'Management::ruangan_delete/$1');
 	});
 
+	$routes->group('mahasiswa', function($routes) {
+		$routes->add('', 'Management::list_mhs');
+		$routes->add('add', 'Management::mhs_form');	
+		$routes->add('(:num)/edit', 'Management::mhs_form/$1');
+		$routes->add('(:num)/delete', 'Management::mhs_delete/$1');
+	});
+	
+	$routes->group('dosen', function($routes) {
+		$routes->add('', 'Management::list_dosen');
+		$routes->add('add', 'Management::dosen_form');	
+		$routes->add('(:segment)/edit', 'Management::dosen_form/$1');
+		$routes->add('(:segment)/delete', 'Management::dosen_delete/$1');
+	});
+
+	$routes->group('user', function($routes) {
+		$routes->add('', 'Management::list_user');
+		$routes->add('add', 'Management::user_form');	
+		$routes->add('(:segment)/edit', 'Management::dosen_form/$1');
+		$routes->add('(:segment)/delete', 'Management::dosen_delete/$1');
+	});
+
 }); 
 
 

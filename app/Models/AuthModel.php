@@ -58,29 +58,30 @@ EOD;
 
     public function auth($identity, $password, $type = "")
     {
+        $levelMhs   = 5;
+        $levelDosen = 4;
+        $user       = null;
+
         $mhsModel = new \App\Models\MahasiswaModel($this->db);
         $dosenModel = new \App\Models\DosenModel($this->db);
 
         if (empty($identity))  return ["status" => "failed", "code" => 401, "msg" => "Pengguna tidak boleh kosong."];
         if (empty($password))  return ["status" => "failed", "code" => 401, "msg" => "Kata sandi tidak boleh kosong."];
 
-        $cekMhs = $mhsModel->findMahasiswa($identity);
-        $cekDosen = $dosenModel->findDosen($identity);
+        //Pertama cek dosen dulu
+        $cekDosen   = $dosenModel->findDosenByKeyword($identity)->getFirstRow();
+        $cekMhs     = $mhsModel->findMahasiswa($identity)->getFirstRow();
 
-        if (!empty($cekMhs->getRowArray())) {
+        if (!empty($cekMhs)) {
             $identity = $cekMhs->getFirstRow()->user_identity;
-        } elseif (!empty($cekDosen->getRowArray())) {
+        } elseif (!empty($cekDosen)) {
             $identity = $cekDosen->getFirstRow()->user_identity;
         } else {
             return ["status" => "failed", "code" => 401, "msg" => "Pengguna tidak ditemukan."];
         }
 
-        $user = $this->getUser($identity);
-
-        if(empty($user)) return ["status" => "failed", "code" => 401, "msg" => "Pengguna tidak ditemukan."];
-
-        if (password_verify($password, $user->password)) {
-            $u_level    = $this->getUsergroup($user->level);
+        if (password_verify($password, $identity->password)) {
+            $u_level  = $this->getUsergroup($identity->level);
             $jenis      = $u_level->description;
 
             $newdata = array(
@@ -148,7 +149,7 @@ EOD;
             return ["status" => "failed", "code" => 401, "msg" => "Mahasiswa/dosen tidak ditemukan."];
         }
 
-        if(!empty($cekUser)) return ["status" => "failed", "code" => 401, "msg" => "Pengguna sudah ada."];
+        if (!empty($cekUser)) return ["status" => "failed", "code" => 401, "msg" => "Pengguna sudah ada."];
 
         $result = $this->db->table("t_pengguna")
             ->insert([
@@ -157,14 +158,46 @@ EOD;
                 "level" => "4"
             ]);
 
-        if($result) {
+        if ($result) {
             return ["status" => "ok", "code" => 200];
         } else {
-           return ["status" => "failed", "code" => 401, "msg" => "Gagal membuat pengguna"];
+            return ["status" => "failed", "code" => 401, "msg" => "Gagal membuat pengguna"];
         }
     }
 
-    public function resetLupaPassword($identity) {
+    public function createUserDosen($identity)
+    {
+        $dosenModel = new \App\Models\DosenModel($this->db);
+
+        if (empty($identity))  return ["status" => "failed", "code" => 401, "msg" => "Identitas tidak boleh kosong."];
+
+        $cekDosen = $dosenModel->findDosen($identity);
+        $cekUser = $this->getUser($identity);
+
+        if (!empty($cekUser)) return ["status" => "failed", "code" => 401, "msg" => "Pengguna sudah ada."];
+
+        if (!empty($cekDosen->getRowArray())) {
+            $identity = $cekDosen->getFirstRow()->user_identity;
+        } else {
+            return ["status" => "failed", "code" => 401, "msg" => "Dosen tidak ditemukan."];
+        }
+
+        $result = $this->db->table("t_pengguna")
+            ->insert([
+                "identity" => $identity,
+                "password"  => password_hash("dosen", PASSWORD_DEFAULT),
+                "level" => "5"
+            ]);
+
+        if ($result) {
+            return ["status" => "ok", "code" => 200];
+        } else {
+            return ["status" => "failed", "code" => 401, "msg" => "Gagal membuat pengguna"];
+        }
+    }
+
+    public function resetLupaPassword($identity)
+    {
         $mhsModel = new \App\Models\MahasiswaModel($this->db);
         $dosenModel = new \App\Models\DosenModel($this->db);
 
@@ -182,11 +215,16 @@ EOD;
         }
 
         $result = $this->db->table("t_pengguna")
-        ->where("identity", $identity)
-        ->update(["password_changed" => 0, "password" => password_hash("mahasiswa", PASSWORD_DEFAULT)]);
+            ->where("identity", $identity)
+            ->update(["password_changed" => 0, "password" => password_hash("sipadang", PASSWORD_DEFAULT)]);
 
         return $result;
+    }
 
-
+    public function deleteUser($identity, $level) {
+        return $this->db->table("t_pengguna")
+        ->where("user_identity", $identity)
+        ->where("level", $level)
+        ->delete();
     }
 }
