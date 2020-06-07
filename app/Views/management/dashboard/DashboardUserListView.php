@@ -1,9 +1,8 @@
 <div class="container-fluid">
 
   <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Daftar Jadwal</h1>
-    <a href="<?= base_url("management/jadwal/add") ?>" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fas fa-plus fa-sm text-white-50"></i> Tambah Jadwal</a>
-
+    <h1 class="h3 mb-0 text-gray-800">Daftar Pengguna</h1>
+    <a href="<?= base_url("management/users/add") ?>" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fas fa-plus fa-sm text-white-50"></i> Tambah Pengguna</a>
   </div>
 
   <div class="row">
@@ -24,27 +23,27 @@
     <div class="col-lg-12">
       <?php
       $i = 0;
-      if (!empty(@$list_jadwal)) { ?>
+      if (!empty(@$userList)) { ?>
         <table class="table table-hover dataTable">
           <thead>
             <tr>
               <th scope="col">#</th>
-              <th scope="col">Tanggal Sidang</th>
-              <th scope="col">Kelompok</th>
-              <th scope="col">Ruangan</th>
+              <th scope="col">Identitas</th>
+              <th scope="col">Nama</th>
+              <th scope="col">Jenis</th>
               <th scope="col">Aksi</th>
             </tr>
           </thead>
           <tbody>
-            <?php foreach ($list_jadwal as $item) { ?>
+            <?php foreach ($userList as $item) { ?>
               <tr>
                 <th scope="row"><?= ++$i ?></th>
-                <td><?= $item->tgl_sidang_fmtd ?></td>
-                <td><?= $item->nama_kelompok_sidang ?></td>
-                <td><?= "$item->kode_ruang / $item->nama_ruang" ?></td>
+                <td><?= $item->identity ?></td>
+                <td><?= $item->nama ?></td>
+                <td><?= $item->type ?></td>
                 <td>
-                  <a href="<?= base_url("management/jadwal/{$item->id_sidang}/edit") ?>" class="btn btn-primary">Edit</a>
-                  <a href="<?= base_url("management/jadwal/{$item->id_sidang}/delete") ?>" class="btn btn-danger">Hapus</a>
+                  <a href="<?= base_url("management/users/{$item->reset_id}/reset_password") ?>" class="btn btn-warning">Reset password</a>
+                  <a href="<?= base_url("management/users/{$item->reset_id}/delete") ?>" class="btn  btn-outline-danger">Hapus</a>
                 </td>
               </tr>
             <?php } ?>

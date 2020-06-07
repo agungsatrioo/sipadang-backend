@@ -14,10 +14,12 @@ class MahasiswaModel extends Model
 			"mhs_id",
 			"nim as user_identity",
 			"nama as user_name",
+			"nama as nama_mhs",
 			"nim",
 			"nama",
 			"jk",
 			"jur_kode",
+			"jur_kode as kode_jur",
 			"nama_jur"
 		])
 		->join("t_jurusan", "t_jurusan.kode_jur = mhs.jur_kode");

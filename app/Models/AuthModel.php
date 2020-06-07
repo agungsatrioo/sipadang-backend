@@ -42,11 +42,15 @@ EOD;
         return $private_key;
     }
 
-    public function getUser($identity)
+    public function getUser($identity = "")
     {
-        return $this->db->table("t_pengguna")
-            ->where("identity", $identity)
-            ->get()->getFirstRow();
+        $builder = $this->db->table("t_pengguna");
+
+        if (!empty($identity)) {
+            $builder = $builder->where("identity", $identity);
+        }
+
+        return !empty($identity) ? $builder->get()->getFirstRow() : $builder->get()->getResultObject();
     }
 
     public function getUsergroup($level)
@@ -69,8 +73,8 @@ EOD;
         if (empty($password))  return ["status" => "failed", "code" => 401, "msg" => "Kata sandi tidak boleh kosong."];
 
         //Pertama cek dosen dulu
-        $cekDosen   = $dosenModel->findDosenByKeyword($identity)->getFirstRow();
         $cekMhs     = $mhsModel->findMahasiswa($identity)->getFirstRow();
+        $cekDosen   = $dosenModel->findDosenByKeyword($identity)->getFirstRow();
 
         if (!empty($cekMhs)) {
             $identity = $cekMhs->getFirstRow()->user_identity;
@@ -221,10 +225,51 @@ EOD;
         return $result;
     }
 
-    public function deleteUser($identity, $level) {
+    public function deleteUser($identity)
+    {
         return $this->db->table("t_pengguna")
-        ->where("user_identity", $identity)
-        ->where("level", $level)
-        ->delete();
+            ->where("user_identity", $identity)
+            ->delete();
+    }
+
+    public function listUser()
+    {
+        $data = $this->getUser();
+
+        $dosenModel = new DosenModel();
+        $mhsModel   = new MahasiswaModel();
+
+        foreach ($data as $item) {
+            switch ($item->level) {
+                case "5": //DOSEN
+                    $result = $dosenModel->findDosenByKeyword("id_dosen~$item->identity")->getFirstRow();
+
+                    if (!empty($result)) {
+                        $item->nama     = $result->nama_dosen;
+                        $item->type     = "Dosen";
+                    } else {
+                        $item->nama = "-";
+                        $item->type = "Dosen";
+                    }
+                    $item->reset_id = "id_dosen~$item->identity";
+                    break;
+                case "4": //MAHASISWA
+                    $result = $mhsModel->findMahasiswa("$item->identity")->getFirstRow();
+
+                    if (!empty($result)) {
+                        $item->nama = $result->nama; 
+                        $item->type = "Mahasiswa";
+                    } else {
+                        $item->nama = "-"; 
+                        $item->type = "Mahasiswa";
+                    }
+                    $item->reset_id = "$item->identity";
+                    break;
+                default:
+                    unset($item);
+            }
+        }
+
+        return $data;
     }
 }

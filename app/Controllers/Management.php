@@ -1493,7 +1493,6 @@ class Management extends BaseController
                 }
             } catch (\Throwable $th) {
                 session()->setFlashdata("error", "Gagal mengedit/menambahkan dosen. Alasan: $th");
-                
             }
         }
 
@@ -1555,6 +1554,112 @@ class Management extends BaseController
         }
 
         return redirect("management/dosen");
+    }
+
+    public function list_user()
+    {
+        //DONE
+        $authModel = new AuthModel($this->db);
+
+        $request = $this->request;
+
+        $data['title'] = "Management - Daftar Pengguna";
+
+        if (!empty($request->getPost("add"))) {
+            $formData   = $request->getPost();
+            $level      = $request->getPost("level");
+
+            unset($formData["add"]);
+
+            try {
+                switch ($level) {
+                    case "4":
+                        $nim = $request->getPost("mhs_id");
+                        $result = $authModel->createUserMahasiswa($nim);
+
+                        if ($result)
+                            session()->setFlashdata("success", "Berhasil menambahkan $nim sebagai mahasiswa.");
+                        else throw new DatabaseException();
+                        break;
+                    case "5":
+                        $id_dosen = $request->getPost("id_dosen");
+                        $result = $authModel->createUserDosen($id_dosen);
+
+                        if ($result)
+                            session()->setFlashdata("success", "Berhasil menambahkan $id_dosen sebagai dosen.");
+                        else throw new DatabaseException();
+
+                        break;
+                }
+            } catch (\Throwable $th) {
+                session()->setFlashdata("error", "Gagal mengedit/menambahkan dosen. Alasan: $th");
+            }
+        }
+
+        $data['userList'] = $authModel->listUser();
+
+        $data['error'] = session()->getFlashdata("error");
+        $data['success'] = session()->getFlashdata("success");
+
+        if (empty($data['userList'])) {
+            $data['error'] = "Tidak ada data pengguna.";
+        }
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardUserListView", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function user_form()
+    {
+        $dosenModel = new \App\Models\DosenModel($this->db);
+        $mhsModel = new \App\Models\MahasiswaModel($this->db);
+
+        $data['title'] = "Management - Tambah Pengguna";
+        $data['header'] = "Tambah Pengguna";
+
+        $data['action_url'] = base_url("management/users");
+
+        $data['option_dosen'] = $dosenModel->findDosen()->getResultObject();
+        $data['option_mhs'] = $mhsModel->findMahasiswa()->getResultObject();
+
+        $data['dashboard_page'] = view("management/dashboard/DashboardUserFormView.php", $data);
+
+        echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
+    }
+
+    public function user_reset($id)
+    {
+        $authModel = new AuthModel($this->db);
+
+        try {
+            $result = $authModel->resetLupaPassword($id);
+
+            if ($result)
+                session()->setFlashdata("success", "Berhasil menreset akun.");
+            else throw new DatabaseException();
+        } catch (\Throwable $th) {
+            session()->setFlashdata("error", "Gagal mereset akun.");
+        }
+
+        return redirect("management/users");
+    }
+
+    public function user_delete($id)
+    {
+        $authModel = new AuthModel($this->db);
+
+        try {
+            $result = $authModel->deleteUser($id);
+
+            if ($result)
+                session()->setFlashdata("success", "Berhasil menghapus akun.");
+            else throw new DatabaseException();
+        } catch (\Throwable $th) {
+            session()->setFlashdata("error", "Gagal menghapus akun.");
+        }
+
+        return redirect("management/users");
     }
 
     private function getho()

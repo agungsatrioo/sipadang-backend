@@ -99,11 +99,11 @@ $routes->group('management', function($routes){
 		$routes->add('(:segment)/delete', 'Management::dosen_delete/$1');
 	});
 
-	$routes->group('user', function($routes) {
+	$routes->group('users', function($routes) {
 		$routes->add('', 'Management::list_user');
 		$routes->add('add', 'Management::user_form');	
-		$routes->add('(:segment)/edit', 'Management::dosen_form/$1');
-		$routes->add('(:segment)/delete', 'Management::dosen_delete/$1');
+		$routes->add('(:segment)/reset_password', 'Management::user_reset/$1');
+		$routes->add('(:segment)/delete', 'Management::user_delete/$1');
 	});
 
 }); 

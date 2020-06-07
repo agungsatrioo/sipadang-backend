@@ -20,6 +20,30 @@
         $("#p12").hide();
         $("#jdul").hide();
 
+        $("#f_dosen").hide();
+        $("#f_mahasiswa").hide();
+
+        $("#level").on('change', function(evt, params) {
+            let value = params.selected;
+
+            switch(value) {
+                case "4":
+                    $("#f_dosen").hide();
+                    $("#f_mahasiswa").show();
+
+                    $("#dosen").removeAttr('required');
+                    $("#mahasiswa").attr('required', 'true');
+                break;
+                case "5":
+                    $("#f_dosen").show();
+                    $("#f_mahasiswa").hide();
+
+                    $("#mahasiswa").removeAttr('required');
+                    $("#dosen").attr('required' , 'true');
+                break;
+            }
+        });
+
         $("#jenis_sidang").on('change', function(evt, params) {
             let value = params.selected;
 
@@ -29,9 +53,9 @@
                     $("#p02").show();
                     $("#jdul").show();
 
-                    $("#penguji1").attr('required');
-                    $("#penguji2").attr('required');
-                    $("#jdul").attr('required');
+                    $("#penguji1").attr('required', 'true');
+                    $("#penguji2").attr('required', 'true');
+                    $("#jdul").attr('required', 'true');
 
                     $("#p03").hide();
                     $("#p11").hide();
@@ -46,9 +70,9 @@
                     $("#p02").show();
                     $("#p03").show();
 
-                    $("#penguji1").attr('required');
-                    $("#penguji2").attr('required');
-                    $("#penguji3").attr('required');
+                    $("#penguji1").attr('required', 'true');
+                    $("#penguji2").attr('required', 'true');
+                    $("#penguji3").attr('required', 'true');
 
                     $("#p11").hide();
                     $("#p12").hide();
@@ -66,12 +90,12 @@
                     $("#p12").show();
                     $("#jdul").show();
 
-                    $("#penguji1").attr('required');
-                    $("#penguji2").attr('required');
+                    $("#penguji1").attr('required', 'true');
+                    $("#penguji2").attr('required', 'true');
                     $("#penguji3").removeAttr('required');
-                    $("#pembimbing1").attr('required');
-                    $("#pembimbing2").attr('required');
-                    $("#judul").attr('required');
+                    $("#pembimbing1").attr('required', 'true');
+                    $("#pembimbing2").attr('required', 'true');
+                    $("#judul").attr('required', 'true');
                     break;
             }
         });
