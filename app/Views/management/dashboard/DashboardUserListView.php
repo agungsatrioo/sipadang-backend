@@ -31,6 +31,7 @@
               <th scope="col">Identitas</th>
               <th scope="col">Nama</th>
               <th scope="col">Jenis</th>
+              <th scope="col">Sudah ubah password?</th>
               <th scope="col">Aksi</th>
             </tr>
           </thead>
@@ -41,9 +42,10 @@
                 <td><?= $item->identity ?></td>
                 <td><?= $item->nama ?></td>
                 <td><?= $item->type ?></td>
+                <td><?= $item->password_changed == 1 ? "Sudah" : "Belum" ?></td>
                 <td>
                   <a href="<?= base_url("management/users/{$item->reset_id}/reset_password") ?>" class="btn btn-warning">Reset password</a>
-                  <a href="<?= base_url("management/users/{$item->reset_id}/delete") ?>" class="btn  btn-outline-danger">Hapus</a>
+                  <a href="<?= base_url("management/users/{$item->level}/{$item->identity}/delete") ?>" class="btn  btn-outline-danger">Hapus</a>
                 </td>
               </tr>
             <?php } ?>

@@ -1645,18 +1645,18 @@ class Management extends BaseController
         return redirect("management/users");
     }
 
-    public function user_delete($id)
+    public function user_delete($level, $id)
     {
         $authModel = new AuthModel($this->db);
 
         try {
-            $result = $authModel->deleteUser($id);
+            $result = $authModel->deleteUser($id, $level);
 
             if ($result)
                 session()->setFlashdata("success", "Berhasil menghapus akun.");
             else throw new DatabaseException();
         } catch (\Throwable $th) {
-            session()->setFlashdata("error", "Gagal menghapus akun.");
+            session()->setFlashdata("error", "Gagal menghapus akun. Alasan: $th");
         }
 
         return redirect("management/users");

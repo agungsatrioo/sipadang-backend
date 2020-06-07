@@ -225,10 +225,11 @@ EOD;
         return $result;
     }
 
-    public function deleteUser($identity)
+    public function deleteUser($identity, $level)
     {
         return $this->db->table("t_pengguna")
-            ->where("user_identity", $identity)
+            ->where("identity", $identity)
+            ->where("level", $level)
             ->delete();
     }
 

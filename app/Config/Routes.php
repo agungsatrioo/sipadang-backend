@@ -103,7 +103,7 @@ $routes->group('management', function($routes){
 		$routes->add('', 'Management::list_user');
 		$routes->add('add', 'Management::user_form');	
 		$routes->add('(:segment)/reset_password', 'Management::user_reset/$1');
-		$routes->add('(:segment)/delete', 'Management::user_delete/$1');
+		$routes->add('(:segment)/(:segment)/delete', 'Management::user_delete/$1/$2');
 	});
 
 }); 
