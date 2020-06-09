@@ -1626,7 +1626,7 @@ class Management extends BaseController
             $data['input_hidden_mhs_id'] = "<input type='hidden' name='mhs_id' value='$mahasiswa->mhs_id'>";
         }
 
-        $data['option_jurusan'] = $jurusanModel->getJurusan()->getResultObject();
+        $data['option_jurusan'] = $jurusanModel->getJurusan("", "8")->getResultObject();
 
         $data['dashboard_page'] = view("management/dashboard/DashboardMahasiswaFormView.php", $data);
 

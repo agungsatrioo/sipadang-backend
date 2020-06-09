@@ -31,6 +31,7 @@
               <th scope="col">NIM</th>
               <th scope="col">Nama</th>
               <th scope="col">JK</th>
+              <th scope="col">No. Tel/WA</th>
               <th scope="col">Jurusan</th>
               <th scope="col">Aksi</th>
             </tr>
@@ -42,6 +43,7 @@
                 <td><?= $item->nim ?></td>
                 <td><?= $item->nama ?></td>
                 <td><?= $item->jk ?></td>
+                <td><?= !empty($item->telepon_seluler) ? $item->telepon_seluler : "-" ?></td>
                 <td><?= $item->nama_jur ?></td>
                 <td>
                   <a href="<?= base_url("management/mahasiswa/{$item->mhs_id}/edit") ?>" class="btn btn-primary">Edit</a>

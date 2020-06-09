@@ -20,7 +20,8 @@ class MahasiswaModel extends Model
 			"jk",
 			"jur_kode",
 			"jur_kode as kode_jur",
-			"nama_jur"
+			"nama_jur",
+			"IFNULL(telepon_seluler, '') AS telepon_seluler"
 		])
 		->join("t_jurusan", "t_jurusan.kode_jur = mhs.jur_kode");
 	}

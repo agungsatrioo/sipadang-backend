@@ -41,6 +41,12 @@
                         <div class="col-sm-10">
                             <input type="text" class="form-control" name="nama" value="<?= @$mhs->nama ?>">
                         </div>
+                    </div> 
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">No. Telepon/WhatsApp</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="telepon_seluler" value="<?= @$mhs->telepon_seluler ?>">
+                        </div>
                     </div>
                     <div class="form-group row">
                         <label class="col-sm-2 col-form-label">Jurusan</label>
