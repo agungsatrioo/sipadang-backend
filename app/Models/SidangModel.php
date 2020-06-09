@@ -502,7 +502,7 @@ class SidangModel extends Model
     {
         $dosenModel = new DosenModel($this->db);
 
-        $result = $this->newSidangDetails("t_sidang_munaqosah", ["mhs.nim", "nama", "judul_munaqosah", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji", "pembimbing"], $nim, $idDosen, $date);
+        $result = $this->newSidangDetails("t_sidang_munaqosah", ["mhs.nim", "nama", "judul_munaqosah", "tanggal_sidang as sidang_date", "ruangan.kode_ruang", "nama_kelompok_sidang", "kelompok.id_kelompok_sidang", "nama_jur", "penguji", "pembimbing", "IFNULL(telepon_seluler, '-') as telepon_seluler"], $nim, $idDosen, $date);
 
         $result = $this->olahResult($result, $dosenModel, function ($ada_nilai, $penguji, $pembimbing) {
             return $ada_nilai ? (.3 * $penguji[0]->nilai) + (.3 * $penguji[1]->nilai) +  (.2 * $pembimbing[0]->nilai) + (.2 * $pembimbing[1]->nilai) : "Belum ada";
@@ -519,7 +519,11 @@ class SidangModel extends Model
         $orCond     = "";
 
         if (!empty($date)) {
-            $conditions = ["tanggal_sidang" => $date];
+            $explode = explode("~", $date);
+
+            if(!empty($explode)) {
+                $conditions = ["tanggal_sidang >" => $explode[0], "tanggal_sidang <" => $explode[1]];
+            } else $conditions = ["tanggal_sidang" => $date];
         } elseif (!empty($nim)) {
             $conditions = ["mhs.nim" => $nim];
         } elseif (!empty($idDosen)) {

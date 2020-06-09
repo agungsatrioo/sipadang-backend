@@ -91,7 +91,7 @@ class BaseController extends Controller
 	}
 
 	public function renderPaper($data) {
-		$landscape 	= false;
+		$landscape 	= !empty($data['landscape']) ? $data['landscape'] : true;
 		$pageSize	= 'letter';
 
 		$data['paperSize'] = $landscape ? "$pageSize landscape" : $pageSize;

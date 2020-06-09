@@ -22,10 +22,32 @@
         <div class="col-lg-12">
             <div class="card mb-4">
                 <div class="card-header">
+                    Cetak Daftar Majelis
+                </div>
+                <div class="card-body">
+                    <p>Cetak rekapitulasi majelis.</p>
+                </div>
+                <form action="<?= base_url("management/cetak_print") ?>" method="post">
+                    <div class="row m-2">
+                        <div class="col-lg-9">
+                            <input type="text" class="form-control date-range" name="rekap_tgl" required readonly>
+                        </div>
+                        <div class="col-lg-3">
+                            <button type="submit" class="form-control btn btn-primary mb-2" name="rekap" value="majelis">Cetak</button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="card mb-4">
+                <div class="card-header">
                     Cetak Rekapitulasi
                 </div>
                 <div class="card-body">
-                    <p>Cetak rekapitulasi nilai sidang berdasarkan tanggal. Isi dahulu tanggal pada form di bawah, lalu tekan salahsatu dari tiga tombol yag juga terdapat di bawah.</p>
+                    <p>Cetak rekapitulasi nilai sidang berdasarkan tanggal. Isi dahulu tanggal pada form, lalu tekan salahsatu dari tiga tombol yang juga terdapat di bawah.</p>
                 </div>
                 <form action="<?= base_url("management/cetak_print") ?>" method="post">
                     <div class="row m-2">
@@ -54,5 +76,6 @@
 
             </div>
         </div>
+
     </div>
 </div>

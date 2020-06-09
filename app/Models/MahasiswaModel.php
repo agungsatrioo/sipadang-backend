@@ -45,7 +45,8 @@ class MahasiswaModel extends Model
 		$query =  $this->db->table("t_mahasiswa mhs")
 			->select([
 				"nim",
-				"nama"
+				"nama",
+				"nama as nama_mhs"
 			])
 			->join("t_jurusan", "t_jurusan.kode_jur = mhs.jur_kode")
 			->like("nim", $wildCard)

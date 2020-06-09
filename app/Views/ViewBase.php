@@ -3,13 +3,26 @@
 <head>
     <title><?= @$title ?></title>
     <?= @$css ?>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 </head>
 
 <body>
     <?= @$page ?>
     <?= @$js ?>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script>
         $('.dataTable').DataTable();
+        $('.date-range').daterangepicker({
+            autoUpdateInput: false,
+            locale: {
+                cancelLabel: 'Clear'
+            }
+        });
+
+        $('.date-range').on('apply.daterangepicker', function(ev, picker) {
+            $(this).val(picker.startDate.format('YYYY-MM-DD') + '~' + picker.endDate.format('YYYY-MM-DD'));
+        });
 
         $('select').chosen();
 
@@ -26,21 +39,21 @@
         $("#level").on('change', function(evt, params) {
             let value = params.selected;
 
-            switch(value) {
+            switch (value) {
                 case "4":
                     $("#f_dosen").hide();
                     $("#f_mahasiswa").show();
 
                     $("#dosen").removeAttr('required');
                     $("#mahasiswa").attr('required', 'true');
-                break;
+                    break;
                 case "5":
                     $("#f_dosen").show();
                     $("#f_mahasiswa").hide();
 
                     $("#mahasiswa").removeAttr('required');
-                    $("#dosen").attr('required' , 'true');
-                break;
+                    $("#dosen").attr('required', 'true');
+                    break;
             }
         });
 

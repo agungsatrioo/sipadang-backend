@@ -84,7 +84,7 @@ class Management extends BaseController
 
         if (!empty($request->getPost("mahasiswaKeyword"))) {
             $sidangModel = new \App\Models\SidangModel($this->db);
-            
+
             $keyword = $request->getPost("mahasiswaKeyword");
             $sidangType = $request->getPost("sidang");
 
@@ -223,8 +223,8 @@ class Management extends BaseController
         $data['error'] = session()->getFlashdata("error");
         $data['success'] = session()->getFlashdata("success");
 
-        if(empty($dataMhs)) {
-            $data['error'] = "Tidak ada data mahasiswa yang tersedia.";
+        if (empty($dataMhs)) {
+            $data['error'] = "Tidak ada data mahasiswa yang tersedia. Harap tambahkan data mahasiswa di menu <b>Daftar Mahasiswa</b>.";
             $data['canAddMhs'] = false;
         } else {
             $data['canAddMhs'] = true;
@@ -232,7 +232,7 @@ class Management extends BaseController
 
         $data['result'] = view("management/dashboard/widget/MahasiswaDetailView.php", $data);
 
-        
+
         $data['dashboard_page'] = view("management/dashboard/DashboardPendaftarSidangView", $data);
 
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
@@ -692,6 +692,9 @@ class Management extends BaseController
                 break;
             case "munaqosah":
                 $result = $this->rekap_munaqosah("$tanggal", isset($withTidakLulus) ? true : false);
+                break;
+            case "majelis":
+                $result = $this->rekap_majelis("$tanggal");
                 break;
             default:
                 break;
@@ -1336,6 +1339,182 @@ class Management extends BaseController
         return $this->renderPaper($data);
     }
 
+    private function rekap_majelis($tanggal)
+    {
+
+        $maxMhs = 6;
+        $line = 0;
+        $page = 0;
+
+        setlocale(LC_ALL, "id");
+
+        $sidangModel = new \App\Models\SidangModel($this->db);
+        $paperModel = new \App\Models\PaperModel($this->db);
+
+        $tglExplode = explode("~", $tanggal);
+
+        $tglInSurat = $sidangModel->tglIndonesia(strftime("R"), true);
+
+        $tglAwal = $sidangModel->tglIndonesia($tglExplode[0], true);
+        $tglAkhir = $sidangModel->tglIndonesia($tglExplode[1], true);
+
+        $data["title"] = "Rekapitulasi";
+        $data["content"] = "";
+
+        $dataUPfinal = [];
+        $pagination = [];
+        $paginationFinal = [];
+
+        $dataUP = $sidangModel->getRekapMunaqosah($tanggal);
+
+        if (empty($dataUP)) return [];
+
+        foreach ($dataUP as $item) {
+            $dataUPfinal[$item->id_kelompok_sidang]["name"] = $item->nama_kelompok_sidang;
+            $dataUPfinal[$item->id_kelompok_sidang]["data"][] = $item;
+
+            $pagination[$item->id_kelompok_sidang] = new \stdClass();
+            $pagination[$item->id_kelompok_sidang]->id = $item->id_kelompok_sidang;
+            $pagination[$item->id_kelompok_sidang]->nama = $item->nama_kelompok_sidang;
+            $pagination[$item->id_kelompok_sidang]->count = count($dataUPfinal[$item->id_kelompok_sidang]["data"]);
+        }
+
+        ksort($dataUPfinal);
+        ksort($pagination);
+
+        foreach ($pagination as $pg) {
+            $line += $pg->count;
+
+            if ($line >= $maxMhs) {
+                $pg->page = $page++;
+                $line = 0;
+            } else {
+                $pg->page = $page;
+            }
+        }
+
+        foreach ($pagination as $pg) {
+            $paginationFinal[$pg->page][] = $dataUPfinal[$pg->id];
+        }
+
+        $a = 0;
+
+        foreach ($paginationFinal as $halaman => $item) {
+            $currPage = "";
+
+            if ($halaman == 0) {
+                $currPage .= $paperModel->kopSurat();
+
+                $currPage .= '<h3 class="text-center">DAFTAR MAJELIS UJIAN MUNAQOSAH</h3>';
+                $currPage .= "
+                <div class=\"row\">
+                    <div class=\"col-lg-2\">Periode</div>
+                    <div class=\"col-lg-10\">: $tglAwal - $tglAkhir</div>
+                </div><BR><br>";
+            }
+
+            foreach ($item as $key => $datas) {
+                $i = 0;
+                $a++;
+
+                $currPage .= $datas["name"] . "<br>&nbsp;";
+
+                $nim = [];
+
+                $currPage .= "
+                    <table>
+                    <thead>
+                        <tr>
+                            <td rowspan='2'>No.</td>
+                            <td rowspan='2'>Nama</td>
+                            <td rowspan='2'>NIM</td>
+                            <td rowspan='2'>No. Telepon/WA</td>
+                            <td rowspan='2'>Judul Skripsi</td>
+                            <td colspan='2'>Penguji</td>
+                            <td rowspan='2'>Tanggal Sidang</td>
+                            <td rowspan='2'>Majelis</td>
+                        </tr>
+                        <tr>
+                            <td>I</td>
+                            <td>II</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                ";
+
+                foreach ($datas["data"] as $key => $anggota) {
+                    $tglSidang = $sidangModel->tglIndonesia("$anggota->sidang_date", true);
+                    
+                    if (!in_array($anggota->nim, $nim)) {
+
+                        $i++;
+
+                        if ($i == 1) {
+                            $mhsCount = count($datas["data"]);
+                            $first = "<td rowspan='$mhsCount' class='text-center'>{$a}</td>";
+                        } else {
+                            $first = "";
+                        }
+
+                        $currPage .= "
+                    <tr>
+                        <td class='text-center'>$i</td>
+                        <td>{$anggota->nama}</td>
+                        <td class='text-center'>{$anggota->nim}</td>
+                        <td class='text-center'>{$anggota->telepon_seluler}</td>
+                        <td class='text-center'>{$anggota->judul_munaqosah}</td>
+                        <td class='text-center'>{$anggota->penguji[0]->nama_dosen}</td>
+                        <td class='text-center'>{$anggota->penguji[1]->nama_dosen}</td>
+                        <td class='text-center'>$tglSidang</td>
+                        $first
+                    </tr>
+                    ";
+                        $nim[] = $anggota->nim;
+                    }
+                }
+
+                $currPage .= "</tbody></table><br>";
+            }
+
+            $newPage = "";
+
+            /*$ttd = "
+            <div class='row'>
+                <div class='col-lg-7'>
+                   
+                </div>                
+                <div class='col-lg-5'>
+                    Bandung, $tglInSurat<br>
+                    Wakil Dekan I<br>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    Dr.H. Moh. Dulkiah, M.Si.<br>
+                    NIP. 197509242007101001 
+                </div>
+            </div>
+        ";*/
+            $ttd = "";
+
+            if ($halaman == count($paginationFinal) - 1) {
+                if ($line < $maxMhs) {
+                    $currPage .= $ttd;
+                } else {
+                    $newPage = $paperModel->newSheet($currPage);
+                }
+            }
+
+            $currPage = $paperModel->newSheet($currPage);
+
+            $data['content'] .= $currPage . $newPage;
+            $data['landscape'] = true;
+        }
+
+        return $this->renderPaper($data);
+    }
+
     public function reset_password()
     {
         $data['title'] = "Management- Ganti Kata Sandi";
@@ -1543,7 +1722,7 @@ class Management extends BaseController
             $data['input_hidden_dosen_id'] = "<input type='hidden' name='id_dosen' value='$dosen->id_dosen'>";
         }
 
-        $data['option_jurusan'] = $jurusanModel->getJurusan("","8")->getResultObject();
+        $data['option_jurusan'] = $jurusanModel->getJurusan("", "8")->getResultObject();
 
         $data['dashboard_page'] = view("management/dashboard/DashboardDosenFormView.php", $data);
 
