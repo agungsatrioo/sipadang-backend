@@ -22,7 +22,7 @@
         <div class="col-lg-12">
             <div class="card mb-4">
                 <div class="card-header">
-                    Form mahasiswa
+                    Form dosen
                 </div>
                 <form action="<?= $action_url ?>" method="post" class="m-4">
                     <?= @$input_hidden_dosen_id ?>
@@ -45,15 +45,15 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label class="col-sm-2 col-form-label">Nama Dosen</label>
-                        <div class="col-sm-10">
-                            <input type="text" class="form-control" name="nama_dosen" value="<?= @$dosen->nama_dosen_orig ?>" required>
-                        </div>
-                    </div>
-                    <div class="form-group row">
                         <label class="col-sm-2 col-form-label">Gelar Depan</label>
                         <div class="col-sm-10">
                             <input type="text" class="form-control" name="gelar_depan" value="<?= @$dosen->gelar_depan ?>">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">Nama Dosen</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="nama_dosen" value="<?= @$dosen->nama_dosen_orig ?>" required>
                         </div>
                     </div>
                     <div class="form-group row">

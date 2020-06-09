@@ -24,6 +24,7 @@ class DosenModel extends Model
 				"IFNULL(nama_jur, '') as nama_jur",
 				"kode_fak",
 				"nama_resmi as nama_fak",
+				"jk"
 				
 			])
 			->join("t_jurusan", "t_jurusan.kode_jur = t_dosen.kode_jur")
@@ -114,8 +115,7 @@ class DosenModel extends Model
 	public function deleteDosen($keyword)
 	{
 		return $this->db->table("t_dosen")
-			->where("nik", $keyword)
-			->orWhere("id_dosen", $keyword)
+			->where("id_dosen", $keyword)
 			->delete();
 	}
 

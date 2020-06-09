@@ -32,7 +32,6 @@ class Management extends BaseController
             ["type" => "hr"],
             ["type" => "header", "Autentikasi"],
             ["type" => "item", "Daftar Pengguna", base_url("management/users"), "fa-users"],
-            ["type" => "item", "Reset Kata Sandi", base_url("management/reset_password"), "fa-key"],
         ];
 
         foreach ($menus as $menuItem) {
@@ -79,12 +78,13 @@ class Management extends BaseController
     {
         $data['title'] = "Management - Pendaftar Sidang";
 
+        $mhsModel = new \App\Models\MahasiswaModel($this->db);
+
         $request = $this->request;
 
         if (!empty($request->getPost("mahasiswaKeyword"))) {
             $sidangModel = new \App\Models\SidangModel($this->db);
-            $mhsModel = new \App\Models\MahasiswaModel($this->db);
-
+            
             $keyword = $request->getPost("mahasiswaKeyword");
             $sidangType = $request->getPost("sidang");
 
@@ -218,10 +218,21 @@ class Management extends BaseController
             }
         }
 
-        $data['result'] = view("management/dashboard/widget/MahasiswaDetailView.php", $data);
+        $dataMhs = $mhsModel->findMahasiswa()->getResultObject();
 
         $data['error'] = session()->getFlashdata("error");
         $data['success'] = session()->getFlashdata("success");
+
+        if(empty($dataMhs)) {
+            $data['error'] = "Tidak ada data mahasiswa yang tersedia.";
+            $data['canAddMhs'] = false;
+        } else {
+            $data['canAddMhs'] = true;
+        }
+
+        $data['result'] = view("management/dashboard/widget/MahasiswaDetailView.php", $data);
+
+        
         $data['dashboard_page'] = view("management/dashboard/DashboardPendaftarSidangView", $data);
 
         echo $this->renderPage('management/dashboard/DashboardBaseView', $this->_merge($data));
@@ -1392,7 +1403,7 @@ class Management extends BaseController
                     $result = $mahasiswaModel->addMhs($formData);
 
                     if ($result)
-                        session()->setFlashdata("success", "Berhasil menambahkan mahasiswa.");
+                        session()->setFlashdata("success", "Berhasil menambahkan mahasiswa.<br><br>Harap diingat bahwa mahasiswa yang bersangkutan belum bisa mengakses sistem melalui ponsel hingga kredensial pengguna untuknya dibuat di menu <b>Daftar Pengguna</b>.");
                     else throw new DatabaseException();
                 }
             } catch (\Throwable $th) {
@@ -1488,7 +1499,7 @@ class Management extends BaseController
                     $result = $dosenModel->addDosen($formData);
 
                     if ($result)
-                        session()->setFlashdata("success", "Berhasil menambahkan dosen.");
+                        session()->setFlashdata("success", "Berhasil menambahkan dosen.<br><br>Harap diingat bahwa dosen yang bersangkutan belum bisa mengakses sistem melalui ponsel hingga kredensial pengguna untuknya dibuat di menu <b>Daftar Pengguna</b>.");
                     else throw new DatabaseException();
                 }
             } catch (\Throwable $th) {
@@ -1532,7 +1543,7 @@ class Management extends BaseController
             $data['input_hidden_dosen_id'] = "<input type='hidden' name='id_dosen' value='$dosen->id_dosen'>";
         }
 
-        $data['option_jurusan'] = $jurusanModel->getJurusan()->getResultObject();
+        $data['option_jurusan'] = $jurusanModel->getJurusan("","8")->getResultObject();
 
         $data['dashboard_page'] = view("management/dashboard/DashboardDosenFormView.php", $data);
 
@@ -1544,7 +1555,9 @@ class Management extends BaseController
         $dosenModel = new \App\Models\DosenModel($this->db);
 
         try {
-            $result = $dosenModel->deleteDosen($id);
+            $idDosen = $dosenModel->findDosenByKeyword($id)->getFirstRow();
+
+            $result = $dosenModel->deleteDosen($idDosen->id_dosen);
 
             if ($result)
                 session()->setFlashdata("success", "Berhasil menghapus dosen.");
