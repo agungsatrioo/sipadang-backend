@@ -150,7 +150,7 @@ EOD;
         if (!empty($cekMhs->getRowArray())) {
             $identity = $cekMhs->getFirstRow()->user_identity;
         } else {
-            return ["status" => "failed", "code" => 401, "msg" => "Mahasiswa/dosen tidak ditemukan."];
+            return ["status" => "failed", "code" => 401, "msg" => "Mahasiswa tidak ditemukan."];
         }
 
         if (!empty($cekUser)) return ["status" => "failed", "code" => 401, "msg" => "Pengguna sudah ada."];

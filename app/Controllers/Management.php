@@ -1770,7 +1770,7 @@ class Management extends BaseController
                         $result = $authModel->createUserMahasiswa($nim);
 
                         if ($result)
-                            session()->setFlashdata("success", "Berhasil menambahkan $nim sebagai mahasiswa.");
+                            session()->setFlashdata("success", "Berhasil menambahkan $nim sebagai mahasiswa. <br><br>Kata sandi default: <b>mahasiswa</b>. Mahasiswa $nim dapat mengubah kata sandinya melalui aplikasi.");
                         else throw new DatabaseException();
                         break;
                     case "5":
@@ -1778,7 +1778,7 @@ class Management extends BaseController
                         $result = $authModel->createUserDosen($id_dosen);
 
                         if ($result)
-                            session()->setFlashdata("success", "Berhasil menambahkan $id_dosen sebagai dosen.");
+                            session()->setFlashdata("success", "Berhasil menambahkan $id_dosen sebagai dosen.<br><br>Kata sandi default: <b>dosen</b>. Dosen $id_dosen dapat mengubah kata sandinya melalui aplikasi.");
                         else throw new DatabaseException();
 
                         break;
