@@ -42,12 +42,16 @@ EOD;
         return $private_key;
     }
 
-    public function getUser($identity = "")
+    public function getUser($identity = "", $level = "")
     {
         $builder = $this->db->table("t_pengguna");
 
         if (!empty($identity)) {
             $builder = $builder->where("identity", $identity);
+        }
+        
+        if (!empty($level)) {
+            $builder = $builder->where("level", $level);
         }
 
         return !empty($identity) ? $builder->get()->getFirstRow() : $builder->get()->getResultObject();
@@ -75,11 +79,14 @@ EOD;
         //Pertama cek dosen dulu
         $cekMhs     = $mhsModel->findMahasiswa($identity)->getFirstRow();
         $cekDosen   = $dosenModel->findDosenByKeyword($identity)->getFirstRow();
+        $myLevel    = "";
 
         if (!empty($cekMhs)) {
-            $identity = $cekMhs->getFirstRow()->user_identity;
+            $identity = $this->getUser($cekMhs->user_identity);
+            $myLevel  = 4;
         } elseif (!empty($cekDosen)) {
-            $identity = $cekDosen->getFirstRow()->user_identity;
+            $identity = $this->getUser($cekDosen->user_identity);
+            $myLevel  = 5;
         } else {
             return ["status" => "failed", "code" => 401, "msg" => "Pengguna tidak ditemukan."];
         }
@@ -97,11 +104,11 @@ EOD;
 
             switch ($u_level->id) {
                 case 5:
-                    $query = $dosenModel->findDosen($identity);
+                    $query = $dosenModel->findDosen($identity->identity);
                     $user_data = $query->getFirstRow('array');
                     break;
                 case 4:
-                    $query = $mhsModel->findMahasiswa($identity);
+                    $query = $mhsModel->findMahasiswa($identity->identity);
                     $user_data = $query->getFirstRow('array');
 
                     break;
@@ -113,7 +120,7 @@ EOD;
 
             return ["status" => "ok", "code" => 200, "data" => array_merge($newdata, $user_data)];
         } else {
-            return ["status" => "failed", "code" => 401, "msg" => "Kata sandi salah..."];
+            return ["status" => "failed", "code" => 401, "msg" => "Kata sandi salah... $identity->password"];
         }
     }
 
@@ -206,21 +213,23 @@ EOD;
         $dosenModel = new \App\Models\DosenModel($this->db);
 
         if (empty($identity))  return false;
-
+        
         $cekMhs = $mhsModel->findMahasiswa($identity);
-        $cekDosen = $dosenModel->findDosen($identity);
+        $cekDosen = $dosenModel->findDosenByKeyword($identity);
 
         if (!empty($cekMhs->getRowArray())) {
             $identity = $cekMhs->getFirstRow()->user_identity;
+            $password = "mahasiswa";
         } elseif (!empty($cekDosen->getRowArray())) {
             $identity = $cekDosen->getFirstRow()->user_identity;
+            $password = "dosen";
         } else {
             return false;
         }
 
         $result = $this->db->table("t_pengguna")
             ->where("identity", $identity)
-            ->update(["password_changed" => 0, "password" => password_hash("sipadang", PASSWORD_DEFAULT)]);
+            ->update(["password_changed" => 0, "password" => password_hash($password, PASSWORD_DEFAULT)]);
 
         return $result;
     }
